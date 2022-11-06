@@ -1,0 +1,41 @@
+{
+  "name": "sfmok/request-input",
+  "type": "library",
+  "description": "This package used for convert request payload to DTO input",
+  "authors": [
+    {
+      "name": "Mokhtar Tlili",
+      "email": "tlili.mokhtar@gmail.com",
+      "homepage": "https://devcore.tools"
+    }
+  ],
+  "license": "MIT",
+  "require": {
+    "php": "^8.0",
+    "symfony/http-kernel": "^5.4 || ^6.0",
+    "symfony/http-foundation": "^5.4 || ^6.0",
+    "symfony/serializer": "^5.4 || ^6.0",
+    "symfony/validator": "^5.4 || ^6.0",
+    "symfony/dependency-injection": "^5.4 || ^6.0",
+    "symfony/property-access": "^5.4 || ^6.0",
+    "symfony/config": "^5.4 || ^6.0",
+    "doctrine/annotations": "^1.13"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9"
+  },
+  "autoload": {
+    "psr-4": {
+      "Sfmok\\RequestInput\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Sfmok\\RequestInput\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "tests": "phpunit"
+  },
+  "prefer-stable": true
+}
