@@ -2,6 +2,6 @@
 
 namespace Sfmok\RequestInput;
 
-interface InputValidationInterface
+interface ValidationInterface
 {
 }

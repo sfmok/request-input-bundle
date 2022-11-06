@@ -1,32 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sfmok\RequestInput\Factory;
 
+use Sfmok\RequestInput\InputInterface;
+use Sfmok\RequestInput\ValidationInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Sfmok\RequestInput\InputValidationInterface;
+use Sfmok\RequestInput\Serializer\InputSerializer;
 use Sfmok\RequestInput\Exception\InputValidationException;
-use Sfmok\RequestInput\Serializer\RequestInputSerializer;
-use Sfmok\RequestInput\RequestInputInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-final class RequestInputFactory implements RequestInputFactoryInterface
+final class InputFactory implements InputFactoryInterface
 {
-    private RequestInputSerializer $serializer;
+    private InputSerializer $serializer;
     private ValidatorInterface $validator;
 
-    public function __construct(RequestInputSerializer $serializer, ValidatorInterface $validator)
+    public function __construct(InputSerializer $serializer, ValidatorInterface $validator)
     {
         $this->serializer = $serializer;
         $this->validator = $validator;
     }
 
-    public function createFromRequest(Request $request, string $inputClass): RequestInputInterface
+    public function createFromRequest(Request $request, string $inputClass): InputInterface
     {
-        /** @var RequestInputInterface $input */
+        /** @var InputInterface $input */
         $input = $this->serializer->deserialize($request->getContent(), $inputClass, JsonEncoder::FORMAT);
 
-        if (!$input instanceof InputValidationInterface) {
+        if (!$input instanceof ValidationInterface) {
             return $input;
         }
 

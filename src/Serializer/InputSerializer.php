@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sfmok\RequestInput\Serializer;
 
 use Doctrine\Common\Annotations\AnnotationReader;
@@ -10,7 +12,7 @@ use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
-class RequestInputSerializer extends Serializer
+class InputSerializer extends Serializer
 {
     public function __construct()
     {

@@ -1,25 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sfmok\RequestInput\ArgumentResolver;
 
-use Sfmok\RequestInput\Factory\RequestInputFactoryInterface;
-use Sfmok\RequestInput\RequestInputInterface;
+use Sfmok\RequestInput\InputInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
+use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
+use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 
 class InputArgumentResolver implements ArgumentValueResolverInterface
 {
-    private RequestInputFactoryInterface $inputFactory;
+    private InputFactoryInterface $inputFactory;
 
-    public function __construct(RequestInputFactoryInterface $inputFactory)
+    public function __construct(InputFactoryInterface $inputFactory)
     {
         $this->inputFactory = $inputFactory;
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
-        return is_subclass_of($argument->getType(), RequestInputInterface::class);
+        return is_subclass_of($argument->getType(), InputInterface::class);
     }
 
     public function resolve(Request $request, ArgumentMetadata $argument): iterable

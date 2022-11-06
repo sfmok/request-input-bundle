@@ -2,6 +2,18 @@ services:
   _defaults:
     autowire: true
 
+  Sfmok\RequestInput\Serializer\InputSerializer: ~
+
+  Sfmok\RequestInput\Factory\InputFactory:
+    arguments:
+      $serializer: '@Sfmok\RequestInput\Serializer\InputSerializer'
+
+  Sfmok\RequestInput\Factory\InputFactoryInterface: '@Sfmok\RequestInput\Factory\InputFactory'
+
+  Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver:
+    tags:
+      - { name: controller.argument_value_resolver, priority: 40 }
+
   Sfmok\RequestInput\EventListener\InputValidationExceptionListener:
     tags:
       - { name: kernel.event_listener, event: kernel.exception }
