@@ -37,7 +37,7 @@ class InputArgumentResolverTest extends TestCase
     {
         $dummyInput = new DummyInput();
         $resolver = $this->createArgumentResolver();
-        $argument = new ArgumentMetadata('foo', $dummyInput::class, false, false, null);
+        $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json']);
 
         $this->inputFactory
