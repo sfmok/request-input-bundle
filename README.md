@@ -53,10 +53,10 @@ class PostController
         # dump input
         dd($input);
         
-        # set data input and store
+        # set entity data and store
         $post = (new Post())
-            ->setTitle($input->getTitle()
-            ->setContent($input->getTitle()
+            ->setTitle($input->getTitle())
+            ->setContent($input->getTitle())
             ->setTags($input->getTags())
             ->setName($input->getName())
         ;
