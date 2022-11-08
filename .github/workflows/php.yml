@@ -25,7 +25,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ matrix.php }}
-        tools: composer
+        tools: composer, phpstan, phpunit
         coverage: pcov
 
     - name: Validate composer.json and composer.lock
@@ -44,10 +44,7 @@ jobs:
       run: composer install --prefer-dist --no-progress
 
     - name: Quality Code
-      run: composer run-script phpstan
+      run: phpstan
 
     - name: PHPUnit Tests
-      run: composer run-script phpunit
-
-    - name: Setup PCOV
-      run: pcov
+      run: phpunit
