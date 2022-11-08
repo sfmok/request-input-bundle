@@ -33,7 +33,7 @@ jobs:
       run: composer install --prefer-dist --no-progress
 
     - name: Quality Code
-      run: composer run-script phpsta
+      run: composer run-script phpstan
 
     - name: PHPUnit Tests
       run: composer run-script phpunit
