@@ -9,5 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 interface InputFactoryInterface
 {
-    public function createFromRequest(Request $request, string $inputClass): InputInterface;
+    public const INPUT_FORMATS = ['json', 'xml', 'form'];
+
+    public function createFromRequest(Request $request, string $inputClass, string $format): InputInterface;
 }

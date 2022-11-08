@@ -21,11 +21,15 @@ class InputArgumentResolver implements ArgumentValueResolverInterface
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
+        if (!\in_array($request->getContentType(), InputFactoryInterface::INPUT_FORMATS)) {
+            return false;
+        }
+
         return is_subclass_of($argument->getType(), InputInterface::class);
     }
 
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
-        yield $this->inputFactory->createFromRequest($request, $argument->getType());
+        yield $this->inputFactory->createFromRequest($request, $argument->getType(), $request->getContentType());
     }
 }
