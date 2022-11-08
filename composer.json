@@ -46,7 +46,7 @@
     }
   },
   "scripts": {
-    "test": "vendor/bin/phpunit",
+    "phpunit": "vendor/bin/phpunit tests",
     "fix-cs": "vendor/bin/php-cs-fixer fix src/",
     "phpstan": "vendor/bin/phpstan analyse src tests"
   },
