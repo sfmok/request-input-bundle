@@ -1,7 +1,14 @@
 {
   "name": "sfmok/request-input",
   "type": "library",
-  "description": "This package used for convert request payload to DTO input",
+  "description": "RequestInput bundle provides auto-transform request data into DTO input objects",
+  "keywords": [
+    "request to input",
+    "request to dto",
+    "bundle",
+    "input",
+    "dto"
+  ],
   "authors": [
     {
       "name": "Mokhtar Tlili",
@@ -11,19 +18,19 @@
   ],
   "license": "MIT",
   "require": {
-    "php": "^8.0",
-    "symfony/http-kernel": "^5.4 || ^6.0",
-    "symfony/http-foundation": "^5.4 || ^6.0",
-    "symfony/serializer": "^5.4 || ^6.0",
-    "symfony/validator": "^5.4 || ^6.0",
-    "symfony/dependency-injection": "^5.4 || ^6.0",
-    "symfony/property-access": "^5.4 || ^6.0",
-    "symfony/config": "^5.4 || ^6.0",
+    "php": "^7.1.3",
+    "symfony/http-kernel": "^4.4 || ^5.4 || ^6.0",
+    "symfony/http-foundation": "^4.4 || ^5.4 || ^6.0",
+    "symfony/serializer": "^4.4 || ^5.4 || ^6.0",
+    "symfony/validator": "^4.4 || ^5.4 || ^6.0",
+    "symfony/dependency-injection": "^4.4 || ^5.4 || ^6.0",
+    "symfony/property-access": "^4.4 || ^5.4 || ^6.0",
+    "symfony/config": "^4.4 || ^5.4 || ^6.0",
     "doctrine/annotations": "^1.13"
   },
   "require-dev": {
     "phpunit/phpunit": "^9",
-    "symfony/framework-bundle": "^6.1",
+    "symfony/framework-bundle": "^4.4 || ^5.4 || ^6.0",
     "phpspec/prophecy-phpunit": "^2.0"
   },
   "autoload": {

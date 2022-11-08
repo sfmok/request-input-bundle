@@ -10,17 +10,25 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class DummyInput implements InputInterface
 {
-    #[Assert\NotBlank]
+    /**
+     * @Assert\NotBlank()
+     */
     private string $title;
 
-    #[Assert\NotBlank]
+    /**
+     * @Assert\NotBlank()
+     */
     private string $content;
 
-    #[Assert\Type(type: 'array')]
+    /**
+     * @Assert\Type(type="array")
+     */
     private array $tags = [];
 
-    #[SerializedName('author')]
-    #[Assert\NotBlank]
+    /**
+     * @SerializedName('author')
+     * @Assert\NotBlank()
+     */
     private string $name;
 
     public function getTitle(): string
