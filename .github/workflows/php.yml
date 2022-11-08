@@ -50,4 +50,4 @@ jobs:
       run: composer run-script phpunit
 
     - name: Setup PCOV
-      run: vendor/bin/pcov
+      run: pcov
