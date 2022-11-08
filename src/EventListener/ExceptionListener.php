@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sfmok\RequestInput\EventListener;
 
 use Sfmok\RequestInput\Exception\ValidationException;

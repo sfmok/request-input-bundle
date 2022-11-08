@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Tests\ArgumentResolver;
 
+use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 use Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Tests\Fixtures\Input\DummyInput;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 
-class InputArgumentResolverTest extends KernelTestCase
+class InputArgumentResolverTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -21,20 +21,19 @@ class InputArgumentResolverTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
         $this->inputFactory = $this->prophesize(InputFactoryInterface::class);
     }
 
     /**
      * @dataProvider provideSupports
      */
-    public function testSupports(bool $expected, Request $request, ArgumentMetadata $argument)
+    public function testSupports(bool $expected, Request $request, ArgumentMetadata $argument): void
     {
         $resolver = $this->createArgumentResolver();
         $this->assertSame($expected, $resolver->supports($request, $argument));
     }
 
-    public function testResolveSucceeds()
+    public function testResolveSucceeds(): void
     {
         $dummyInput = new DummyInput();
         $resolver = $this->createArgumentResolver();
