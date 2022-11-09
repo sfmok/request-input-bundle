@@ -6,7 +6,7 @@ RequestInput bundle provides auto-transform request data into DTO input objects
 ### Installation
 Require the bundle with composer:
 ```bash
-composer require sfmok/request-input
+composer require sfmok/request-input-bundle
 ```
 
 ### How to use

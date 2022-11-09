@@ -1,6 +1,6 @@
 {
-  "name": "sfmok/request-input",
-  "type": "library",
+  "name": "sfmok/request-input-bundle",
+  "type": "symfony-bundle",
   "description": "RequestInput bundle provides auto-transform request data into DTO input objects",
   "keywords": [
     "request to input",
