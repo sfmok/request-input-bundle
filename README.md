@@ -28,7 +28,7 @@ class PostInput implements InputInterface
     private string $content;
 
     /**
-     * @Assert\Type(type="array")
+     * @Assert\NotBlank()
      */
     private array $tags = [];
 
@@ -56,7 +56,7 @@ class PostController
         # set entity data and store
         $post = (new Post())
             ->setTitle($input->getTitle())
-            ->setContent($input->getTitle())
+            ->setContent($input->getContent())
             ->setTags($input->getTags())
             ->setName($input->getName())
         ;
