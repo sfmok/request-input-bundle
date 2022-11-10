@@ -2,7 +2,10 @@ services:
   _defaults:
     autowire: true
 
-  Sfmok\RequestInput\Factory\InputFactory: ~
+  Sfmok\RequestInput\Factory\InputFactory:
+    arguments:
+      $inputFormats: '%request_input.formats%'
+      $enabled: '%request_input.enabled%'
 
   Sfmok\RequestInput\Factory\InputFactoryInterface: '@Sfmok\RequestInput\Factory\InputFactory'
 

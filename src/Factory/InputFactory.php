@@ -11,6 +11,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * @internal
+ */
 final class InputFactory implements InputFactoryInterface
 {
     private SerializerInterface $serializer;

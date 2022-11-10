@@ -13,15 +13,19 @@ use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 class InputArgumentResolver implements ArgumentValueResolverInterface
 {
     private InputFactoryInterface $inputFactory;
+    private array $inputFormats;
+    private bool $enabled;
 
-    public function __construct(InputFactoryInterface $inputFactory)
+    public function __construct(InputFactoryInterface $inputFactory, array $inputFormats, bool $enabled = true)
     {
         $this->inputFactory = $inputFactory;
+        $this->inputFormats = $inputFormats;
+        $this->enabled = $enabled;
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
-        if (!\in_array($request->getContentType(), InputFactoryInterface::INPUT_FORMATS)) {
+        if (!$this->enabled || !\in_array($request->getContentType(), $this->inputFormats)) {
             return false;
         }
 

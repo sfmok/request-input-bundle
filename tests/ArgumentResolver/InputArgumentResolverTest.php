@@ -25,20 +25,43 @@ class InputArgumentResolverTest extends TestCase
     }
 
     /**
-     * @dataProvider provideSupports
+     * @dataProvider provideSupportsWithDefaultFormats
      */
-    public function testSupports(bool $expected, Request $request, ArgumentMetadata $argument): void
+    public function testSupportsWithDefaultFormats(bool $expected, ?string $contentType, string $inputClass): void
     {
-        $resolver = $this->createArgumentResolver();
+        $request = new Request();
+        $request->headers->set('Content-Type', $contentType);
+
+        $argument = new ArgumentMetadata('foo', $inputClass, false, false, null);
+
+        $resolver = $this->createArgumentResolver(InputFactoryInterface::INPUT_FORMATS);
+        $this->assertSame($expected, $resolver->supports($request, $argument));
+    }
+
+    /**
+     * @dataProvider provideSupportsWithCustomFormats
+     */
+    public function testSupportsWithCustomFormats(bool $expected, ?string $contentType, string $inputClass): void
+    {
+        $request = new Request();
+        $request->headers->set('Content-Type', $contentType);
+
+        $argument = new ArgumentMetadata('foo', $inputClass, false, false, null);
+
+        $resolver = $this->createArgumentResolver(['json']);
         $this->assertSame($expected, $resolver->supports($request, $argument));
     }
 
     public function testResolveSucceeds(): void
     {
         $dummyInput = new DummyInput();
-        $resolver = $this->createArgumentResolver();
+
+        $request = new Request();
+        $request->headers->set('Content-Type', 'application/json');
+
         $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
-        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json']);
+
+        $resolver = $this->createArgumentResolver([InputFactoryInterface::INPUT_FORMATS]);
 
         $this->inputFactory
             ->createFromRequest($request, $argument->getType(), $request->getContentType())
@@ -49,21 +72,40 @@ class InputArgumentResolverTest extends TestCase
         $this->assertEquals([$dummyInput], iterator_to_array($resolver->resolve($request, $argument)));
     }
 
-    public function provideSupports(): iterable
+    public function provideSupportsWithDefaultFormats(): iterable
     {
-        yield [false, new Request(), new ArgumentMetadata('foo', \stdClass::class, false, false, null)];
-        yield [false, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/rdf+xml']), new ArgumentMetadata('foo', \stdClass::class, false, false, null)];
-        yield [false, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'text/html']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
-        yield [false, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/javascript']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
-        yield [false, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'text/plain']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
-        yield [true, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
-        yield [false, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/ld+json']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
-        yield [true, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/xml']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
-        yield [true, new Request([], [], [], [], [], ['CONTENT_TYPE' => 'multipart/form-data']), new ArgumentMetadata('foo', DummyInput::class, false, false, null)];
+        yield [false, null, \stdClass::class];
+        yield [false, 'application/rdf+xml', \stdClass::class];
+        yield [false, 'text/html', DummyInput::class];
+        yield [false, 'application/javascript', DummyInput::class];
+        yield [false, 'text/plain', DummyInput::class];
+        yield [false, 'application/ld+json', DummyInput::class];
+        yield [false, 'application/json', \stdClass::class];
+        yield [true, 'application/json', DummyInput::class];
+        yield [true, 'application/xml', DummyInput::class];
+        yield [false, 'application/xml', \stdClass::class];
+        yield [false, 'multipart/form-data', \stdClass::class];
+        yield [true, 'multipart/form-data', DummyInput::class];
     }
 
-    private function createArgumentResolver(): InputArgumentResolver
+    public function provideSupportsWithCustomFormats(): iterable
     {
-        return new InputArgumentResolver($this->inputFactory->reveal());
+        yield [false, null, \stdClass::class];
+        yield [false, 'application/rdf+xml', \stdClass::class];
+        yield [false, 'text/html', DummyInput::class];
+        yield [false, 'application/javascript', DummyInput::class];
+        yield [false, 'text/plain', DummyInput::class];
+        yield [false, 'application/ld+json', DummyInput::class];
+        yield [false, 'application/json', \stdClass::class];
+        yield [true, 'application/json', DummyInput::class];
+        yield [false, 'application/xml', DummyInput::class];
+        yield [false, 'application/xml', \stdClass::class];
+        yield [false, 'multipart/form-data', \stdClass::class];
+        yield [false, 'multipart/form-data', DummyInput::class];
+    }
+
+    private function createArgumentResolver(array $formats): InputArgumentResolver
+    {
+        return new InputArgumentResolver($this->inputFactory->reveal(), $formats);
     }
 }

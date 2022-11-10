@@ -33,7 +33,8 @@
     "symfony/framework-bundle": "^4.4 || ^5.4 || ^6.0",
     "phpspec/prophecy-phpunit": "^2.0",
     "friendsofphp/php-cs-fixer": "^3.13",
-    "phpstan/phpstan": "^1.9"
+    "phpstan/phpstan": "^1.9",
+    "symfony/yaml": "^6.1"
   },
   "autoload": {
     "psr-4": {
