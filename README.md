@@ -96,3 +96,13 @@ Content-Type: application/problem+json; charset=utf-8
   ]
 }
 ```
+
+### Configuration
+* In case you want to serve a specific format for your inputs:
+```yaml
+# config/packages/request_input.yaml
+request_input:
+  enabled: true # default value true
+  formats: ['json'] # default value ['json', 'xml', 'form']
+```
+with above configuration RequestInputBundle will transform JSON request data only.
