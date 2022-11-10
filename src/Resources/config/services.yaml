@@ -2,14 +2,14 @@ services:
   _defaults:
     autowire: true
 
-  Sfmok\RequestInput\Factory\InputFactory:
-    arguments:
-      $inputFormats: '%request_input.formats%'
-      $enabled: '%request_input.enabled%'
+  Sfmok\RequestInput\Factory\InputFactory: ~
 
   Sfmok\RequestInput\Factory\InputFactoryInterface: '@Sfmok\RequestInput\Factory\InputFactory'
 
   Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver:
+    arguments:
+      $inputFormats: '%request_input.formats%'
+      $enabled: '%request_input.enabled%'
     tags:
       - { name: controller.argument_value_resolver, priority: 40 }
 
