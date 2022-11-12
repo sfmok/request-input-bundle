@@ -11,7 +11,7 @@ class Input
     public const INPUT_XML_FORMAT = 'xml';
     public const INPUT_FORM_FORMAT = 'form';
     public const INPUT_SUPPORTED_FORMATS = [self::INPUT_JSON_FORMAT, self::INPUT_XML_FORMAT, self::INPUT_FORM_FORMAT];
-    
+
     public function __construct(
         private string $format = 'json',
         private array $groups = ['Default'],

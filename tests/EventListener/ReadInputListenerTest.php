@@ -20,6 +20,7 @@ class ReadInputListenerTest extends TestCase
     use ProphecyTrait;
 
     private ObjectProphecy $inputMetadataFactory;
+    private ObjectProphecy $httpKernel;
 
     protected function setUp(): void
     {
