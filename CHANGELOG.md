@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+- Add skip validation in yaml configuration
+- Add Input Attribute for custom configuration per action (format, groups and context)
+
 ## 1.1.0
 
 * Add bundle configurations:
