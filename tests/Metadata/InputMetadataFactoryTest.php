@@ -35,7 +35,7 @@ class InputMetadataFactoryTest extends TestCase
         $input = $this->factory->createInputMetadata([new TestController(), 'testWithoutInput']);
         $this->assertNull($input);
 
-        $input = $this->factory->createInputMetadata(\Closure::fromCallable([(new TestController()), 'testWithoutInput']));
+        $input = $this->factory->createInputMetadata(\Closure::fromCallable([new TestController(), 'testWithoutInput']));
         $this->assertNull($input);
     }
 }
