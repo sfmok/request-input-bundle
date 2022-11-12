@@ -1,8 +1,9 @@
 # Changelog
 
 ## 1.2.0
-- Add skip validation in yaml configuration
+- Add skip validation in YAML configuration
 - Add Input Attribute for custom configuration per action (format, groups and context)
+- Refactoring using php 8
 
 ## 1.1.0
 
