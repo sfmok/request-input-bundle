@@ -3,9 +3,13 @@
 [![Latest Stable Version](http://poser.pugx.org/sfmok/request-input-bundle/v/stable)](https://packagist.org/packages/sfmok/request-input-bundle)
 [![License](http://poser.pugx.org/sfmok/request-input-bundle/license)](https://packagist.org/packages/sfmok/request-input-bundle)
 
-RequestInput bundle provides auto-transform request data into DTO input objects
-- Request data supported: `json`, `xml` and `form`
-- Resolve inputs arguments for controllers actions
+**RequestInputBundle** converts request data into DTO inputs objects with validation.
+
+- Request data supported: `json`, `xml` and `form` based on header content type.
+- Resolve inputs arguments for controllers actions.
+- Validate DTO inputs objects (An option to enable or disable it).
+- Global YAML configuration
+- Specific Attribute configuration per action
 
 ### Installation
 Require the bundle with composer:
@@ -21,25 +25,17 @@ use Sfmok\RequestInput\InputInterface;
 
 class PostInput implements InputInterface
 {
-    /**
-     * @Assert\NotBlank()
-     */
+    #[Assert\NotBlank]
     private string $title;
 
-    /**
-     * @Assert\NotBlank()
-     */
+    #[Assert\NotBlank]
     private string $content;
 
-    /**
-     * @Assert\NotBlank()
-     */
-    private array $tags = [];
+    #[Assert\NotBlank]
+    private array $tags;
 
-    /**
-     * @SerializedName('author')
-     * @Assert\NotBlank()
-     */
+    #[SerializedName('author')]
+    #[Assert\NotBlank]
     private string $name;
     
     # getters and setters or make properties public
@@ -49,26 +45,19 @@ class PostInput implements InputInterface
 ```php
 class PostController
 {
-    /**
-     * @Route("/posts", methods={"POST"})
-     */
+    # Example with global config
+    #[Route(path: '/posts', name: 'create')]
     public function create(PostInput $input): Response
     {
-        # dump input
         dd($input);
-        
-        # set entity data and store
-        $post = (new Post())
-            ->setTitle($input->getTitle())
-            ->setContent($input->getContent())
-            ->setTags($input->getTags())
-            ->setName($input->getName())
-        ;
-            
-        $em->persist($post);
-        $em->flush();
-        
-        ...
+    }
+    
+    # Example with specific config
+    #[Route(path: '/posts', name: 'create')]
+    #[Input(format: 'json', groups: ['create'], context: ['groups' => ['create']])]
+    public function create(PostInput $input): Response
+    {
+        dd($input);
     }
 }
 ```
@@ -98,11 +87,17 @@ Content-Type: application/problem+json; charset=utf-8
 ```
 
 ### Configuration
-* In case you want to serve a specific format for your inputs:
+* In case you want to serve a specific input data format for all your DTO inputs with skip validation:
 ```yaml
 # config/packages/request_input.yaml
 request_input:
   enabled: true # default value true
   formats: ['json'] # default value ['json', 'xml', 'form']
+  skip_validation: true # default value false
 ```
-with above configuration RequestInputBundle will transform JSON request data only.
+- With above configuration RequestInputBundle will convert JSON request data only and skip validation process.
+- You can also use a format even if disabled globally by using attribute input and specify the format explicitly.
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
