@@ -2,9 +2,15 @@ services:
   _defaults:
     autowire: true
 
-  Sfmok\RequestInput\Factory\InputFactory: ~
+  Sfmok\RequestInput\Factory\InputFactory:
+    arguments:
+      $skipValidation: '%request_input.skip_validation%'
+
+  Sfmok\RequestInput\Metadata\InputMetadataFactory: ~
 
   Sfmok\RequestInput\Factory\InputFactoryInterface: '@Sfmok\RequestInput\Factory\InputFactory'
+
+  Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface: '@Sfmok\RequestInput\Metadata\InputMetadataFactory'
 
   Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver:
     arguments:
@@ -16,3 +22,9 @@ services:
   Sfmok\RequestInput\EventListener\ExceptionListener:
     tags:
       - { name: kernel.event_listener, event: kernel.exception }
+
+  Sfmok\RequestInput\EventListener\ReadInputListener:
+    arguments:
+      $enabled: '%request_input.enabled%'
+    tags:
+      - { name: kernel.event_listener, event: kernel.controller }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\DependencyInjection;
 
+use Sfmok\RequestInput\Attribute\Input;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Sfmok\RequestInput\Factory\InputFactoryInterface;
 
 /**
  * Configuration.
@@ -28,20 +28,23 @@ class Configuration implements ConfigurationInterface
                     ->defaultTrue()
                 ->end()
                 ->arrayNode('formats')
-                    ->defaultValue(InputFactoryInterface::INPUT_FORMATS)
+                    ->defaultValue(Input::INPUT_SUPPORTED_FORMATS)
                     ->requiresAtLeastOneElement()
                     ->scalarPrototype()->end()
                     ->validate()
                         ->ifTrue(function ($values) {
                             foreach ($values as $value) {
-                                if (!\in_array($value, InputFactoryInterface::INPUT_FORMATS)) {
+                                if (!\in_array($value, Input::INPUT_SUPPORTED_FORMATS)) {
                                     return true;
                                 }
                             }
                             return false;
                         })
-                        ->thenInvalid(sprintf('Only the formats %s are supported. Got %s.', implode(', ', InputFactoryInterface::INPUT_FORMATS), '%s'))
+                        ->thenInvalid(sprintf('Only the formats %s are supported. Got %s.', implode(', ', Input::INPUT_SUPPORTED_FORMATS), '%s'))
                     ->end()
+                ->end()
+                ->booleanNode('skip_validation')
+                    ->defaultFalse()
                 ->end()
             ->end();
 

@@ -11,11 +11,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class ExceptionListener
 {
-    private SerializerInterface $serializer;
-
-    public function __construct(SerializerInterface $serializer)
+    public function __construct(private SerializerInterface $serializer)
     {
-        $this->serializer = $serializer;
     }
 
     public function onKernelException(ExceptionEvent $event): void

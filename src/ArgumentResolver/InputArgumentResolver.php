@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\ArgumentResolver;
 
 use Sfmok\RequestInput\InputInterface;
+use Sfmok\RequestInput\Attribute\Input;
 use Symfony\Component\HttpFoundation\Request;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -12,24 +13,25 @@ use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 
 class InputArgumentResolver implements ArgumentValueResolverInterface
 {
-    private InputFactoryInterface $inputFactory;
-    private array $inputFormats;
-    private bool $enabled;
-
-    public function __construct(InputFactoryInterface $inputFactory, array $inputFormats, bool $enabled = true)
-    {
-        $this->inputFactory = $inputFactory;
-        $this->inputFormats = $inputFormats;
-        $this->enabled = $enabled;
+    public function __construct(
+        private InputFactoryInterface $inputFactory,
+        private array $inputFormats,
+        private bool $enabled = true
+    ) {
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
-        if (!$this->enabled || !\in_array($request->getContentType(), $this->inputFormats)) {
+        if (!$this->enabled || !is_subclass_of($argument->getType(), InputInterface::class)) {
             return false;
         }
 
-        return is_subclass_of($argument->getType(), InputInterface::class);
+        /** @var Input|null $inputAttribute */
+        if ($inputAttribute = $request->attributes->get('_input')) {
+            $this->inputFormats = [$inputAttribute->getFormat()];
+        }
+
+        return \in_array($request->getContentType(), $this->inputFormats);
     }
 
     public function resolve(Request $request, ArgumentMetadata $argument): iterable

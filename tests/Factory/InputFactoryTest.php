@@ -6,68 +6,169 @@ namespace Sfmok\RequestInput\Tests\Factory;
 
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\Factory\InputFactory;
+use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Tests\Fixtures\Input\DummyInput;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Prophecy\Prophecy\ObjectProphecy;
 
 class InputFactoryTest extends TestCase
 {
     use ProphecyTrait;
 
-    /**
-     * @dataProvider provideData
-     */
-    public function testCreateFormRequest(Request $request, string $inputClass, string $format): void
+    private ObjectProphecy $validator;
+    private ObjectProphecy $serializer;
+
+    protected function setUp(): void
     {
-        $validatorProphecy = $this->prophesize(ValidatorInterface::class);
-        $serializerProphecy = $this->prophesize(SerializerInterface::class);
-        $input = new $inputClass;
-        $violations = new ConstraintViolationList([]);
-
-        switch ($format) {
-            case 'json':
-            case 'xml':
-                $serializerProphecy
-                    ->deserialize($request->getContent(), $inputClass, $format)
-                    ->willReturn($input)
-                    ->shouldBeCalledOnce();
-                $validatorProphecy
-                    ->validate($input)
-                    ->willReturn($violations)
-                    ->shouldBeCalledOnce();
-                break;
-            case 'form':
-                $serializerProphecy = $this->prophesize(Serializer::class);
-                $serializerProphecy
-                    ->denormalize($request->request->all(), $inputClass, $format)
-                    ->willReturn($input)
-                    ->shouldBeCalledOnce();
-                $validatorProphecy
-                    ->validate($input)
-                    ->willReturn($violations)
-                    ->shouldBeCalledOnce();
-                break;
-            default:
-                $this->expectException(UnexpectedFormatException::class);
-                $this->expectExceptionMessage('The input format "'.$format.'" is not supported. Supported formats are : json, xml, form.');
-        }
-
-        $inputFactory = new InputFactory($serializerProphecy->reveal(), $validatorProphecy->reveal());
-
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $inputClass, $format));
+        $this->validator = $this->prophesize(ValidatorInterface::class);
+        $this->serializer = $this->prophesize(SerializerInterface::class);
     }
 
-    public function provideData(): iterable
+    /**
+     * @dataProvider provideDataRequestWithContent
+     */
+    public function testCreateFormRequestWithContent(Request $request): void
     {
-        yield [new Request([], [], [], [], [], [], json_encode(['foo' => 'bar'])), DummyInput::class, 'json'];
-        yield [new Request([], [], [], [], [], [], '<input><foo>bar</foo></input>'), DummyInput::class, 'xml'];
-        yield [new Request([], ['foo' => 'bar']), DummyInput::class, 'form'];
-        yield [new Request([], [], [], [], [], [], '<javascript></javascript>'), DummyInput::class, 'js'];
-        yield [new Request([], [], [], [], [], [], '<html></html>'), DummyInput::class, 'html'];
+        $input = $this->getDummyInput();
+        $violations = new ConstraintViolationList([]);
+
+        $this->serializer
+            ->deserialize($request->getContent(), $input::class, $request->getContentType(), [])
+            ->willReturn($input)
+            ->shouldBeCalledOnce()
+        ;
+
+        $this->validator
+            ->validate($input, null, ['Default'])
+            ->willReturn($violations)
+            ->shouldBeCalledOnce()
+        ;
+
+        $inputFactory = $this->createInputFactory(false);
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+    }
+
+    /**
+     * @dataProvider provideDataRequestWithFrom
+     */
+    public function testCreateFormRequestWithForm(Request $request): void
+    {
+        $input = $this->getDummyInput();
+        $violations = new ConstraintViolationList([]);
+        $data = json_encode($request->request->all());
+
+        $this->serializer
+            ->deserialize($data, $input::class, 'json', [])
+            ->willReturn($input)
+            ->shouldBeCalledOnce()
+        ;
+
+        $this->validator
+            ->validate($input, null, ['Default'])
+            ->willReturn($violations)
+            ->shouldBeCalledOnce()
+        ;
+
+        $inputFactory = $this->createInputFactory(false);
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+    }
+
+    /**
+     * @dataProvider provideDataUnsupportedFormat
+     */
+    public function testCreateFormRequestFromUnsupportedFormat(Request $request): void
+    {
+        $this->expectException(UnexpectedFormatException::class);
+        $this->expectExceptionMessageMatches('/Only the formats .+ are supported. Got .+./');
+
+        $input = $this->getDummyInput();
+        $this->serializer->deserialize()->shouldNotBeCalled();
+        $this->validator->validate()->shouldNotBeCalled();
+        $inputFactory = $this->createInputFactory(false);
+        $inputFactory->createFromRequest($request, $input::class, $request->getContentType());
+    }
+
+    /**
+     * @dataProvider provideDataRequestWithContent
+     */
+    public function testCreateFormRequestWithSkipValidation(Request $request): void
+    {
+        $input = $this->getDummyInput();
+
+        $this->serializer
+            ->deserialize($request->getContent(), $input::class, $request->getContentType(), [])
+            ->willReturn($input)
+            ->shouldBeCalledOnce()
+        ;
+
+        $this->validator->validate()->shouldNotBeCalled();
+        $inputFactory = $this->createInputFactory(true);
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+    }
+
+    /**
+     * @dataProvider provideDataRequestWithContent
+     */
+    public function testCreateFormRequestWithInputMetadata(Request $request): void
+    {
+        $input = $this->getDummyInput();
+        $request->attributes->set('_input', new Input(groups: ['foo'], context: ['groups' => 'foo']));
+        $violations = new ConstraintViolationList([]);
+
+        $this->serializer
+            ->deserialize($request->getContent(), $input::class, $request->getContentType(), ['groups' => 'foo'])
+            ->willReturn($input)
+            ->shouldBeCalledOnce()
+        ;
+
+        $this->validator
+            ->validate($input, null, ['foo'])
+            ->willReturn($violations)
+            ->shouldBeCalledOnce()
+        ;
+
+        $inputFactory = $this->createInputFactory(false);
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+    }
+
+    public function provideDataRequestWithContent(): iterable
+    {
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/json'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/xml'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/x-json'])];
+    }
+
+    public function provideDataRequestWithFrom(): iterable
+    {
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/x-www-form-urlencoded'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'multipart/form-data'])];
+    }
+
+    public function provideDataUnsupportedFormat(): iterable
+    {
+        yield [new Request(server: ['CONTENT_TYPE' => 'text/html'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/xhtml+xml'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'text/plain'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/javascript'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'text/css'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/ld+json'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/rdf+xml'])];
+        yield [new Request(server: ['CONTENT_TYPE' => 'application/rss+xml'])];
+    }
+
+    private function createInputFactory(bool $skipValidation): InputFactoryInterface
+    {
+        return new InputFactory($this->serializer->reveal(), $this->validator->reveal(), $skipValidation);
+    }
+
+    private function getDummyInput(): DummyInput
+    {
+        return new DummyInput();
     }
 }

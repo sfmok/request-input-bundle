@@ -22,6 +22,7 @@ class RequestInputExtension extends Extension
         # define a few parameters
         $container->setParameter('request_input.enabled', $config['enabled']);
         $container->setParameter('request_input.formats', $config['formats']);
+        $container->setParameter('request_input.skip_validation', $config['skip_validation']);
 
         $this->loadServicesFiles($container);
     }

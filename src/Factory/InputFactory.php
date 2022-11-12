@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Factory;
 
+use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\InputInterface;
 use Sfmok\RequestInput\Exception\ValidationException;
@@ -16,37 +17,39 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 final class InputFactory implements InputFactoryInterface
 {
-    private SerializerInterface $serializer;
-    private ValidatorInterface $validator;
-
-    public function __construct(SerializerInterface $serializer, ValidatorInterface $validator)
-    {
-        $this->serializer = $serializer;
-        $this->validator = $validator;
+    public function __construct(
+        private SerializerInterface $serializer,
+        private ValidatorInterface $validator,
+        private bool $skipValidation
+    ) {
     }
 
-    public function createFromRequest(Request $request, string $inputClass, string $format): InputInterface
+    public function createFromRequest(Request $request, string $type, string $format): InputInterface
     {
-        switch ($format) {
-            case 'json':
-            case 'xml':
-                $input = $this->serializer->deserialize($request->getContent(), $inputClass, $format);
-                break;
-            case 'form':
-                $input = $this->serializer->denormalize($request->request->all(), $inputClass, $format);
-                break;
-            default:
-                throw new UnexpectedFormatException(sprintf(
-                    'The input format "%s" is not supported. Supported formats are : %s.',
-                    $format,
-                    implode(', ', self::INPUT_FORMATS)
-                ));
+        if (!\in_array($format, Input::INPUT_SUPPORTED_FORMATS)) {
+            throw new UnexpectedFormatException(sprintf(
+                'Only the formats %s are supported. Got %s.',
+                $format,
+                implode(', ', Input::INPUT_SUPPORTED_FORMATS)
+            ));
         }
 
-        $violations = $this->validator->validate($input);
+        $data = $request->getContent();
+        if (Input::INPUT_FORM_FORMAT === $format) {
+            $data = json_encode($request->request->all());
+            $format = Input::INPUT_JSON_FORMAT;
+        }
 
-        if ($violations->count()) {
-            throw new ValidationException($violations);
+        $inputMetadata = $request->attributes->get('_input');
+
+        $input = $this->serializer->deserialize($data, $type, $format, $inputMetadata?->getContext() ?? []);
+
+        if (!$this->skipValidation) {
+            $violations = $this->validator->validate($input, null, $inputMetadata?->getGroups() ?? ['Default']);
+
+            if ($violations->count()) {
+                throw new ValidationException($violations);
+            }
         }
 
         return $input;

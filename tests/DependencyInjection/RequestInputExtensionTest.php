@@ -8,8 +8,11 @@ use PHPUnit\Framework\TestCase;
 use Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver;
 use Sfmok\RequestInput\DependencyInjection\RequestInputExtension;
 use Sfmok\RequestInput\EventListener\ExceptionListener;
+use Sfmok\RequestInput\EventListener\ReadInputListener;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
+use Sfmok\RequestInput\Metadata\InputMetadataFactory;
+use Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class RequestInputExtensionTest extends TestCase
@@ -18,6 +21,7 @@ class RequestInputExtensionTest extends TestCase
         'request_input' => [
             'enabled' => true,
             'formats' => ['json', 'xml', 'form'],
+            'skip_validation' => false
         ]
     ];
 
@@ -36,22 +40,27 @@ class RequestInputExtensionTest extends TestCase
         $services = [
             InputArgumentResolver::class,
             ExceptionListener::class,
+            ReadInputListener::class,
             InputFactory::class,
+            InputMetadataFactory::class
         ];
 
         $aliases = [
-            InputFactoryInterface::class
+            InputFactoryInterface::class,
+            InputMetadataFactoryInterface::class
         ];
 
         $parameters = [
             'request_input.enabled' => $config['request_input']['enabled'],
             'request_input.formats' => $config['request_input']['formats'],
+            'request_input.skip_validation' => $config['request_input']['skip_validation'],
         ];
 
         $this->assertContainerHas($services, $aliases, $parameters);
 
         $this->assertServiceHasTags(InputArgumentResolver::class, ['controller.argument_value_resolver']);
         $this->assertServiceHasTags(ExceptionListener::class, ['kernel.event_listener']);
+        $this->assertServiceHasTags(ReadInputListener::class, ['kernel.event_listener']);
     }
 
     private function assertContainerHas(array $services, array $aliases = [], array $parameters = []): void

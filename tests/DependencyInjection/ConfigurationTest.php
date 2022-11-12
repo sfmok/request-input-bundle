@@ -32,6 +32,7 @@ class ConfigurationTest extends TestCase
         $this->assertEquals([
             'enabled' => true,
             'formats' => ['json', 'xml', 'form'],
+            'skip_validation' => false
         ], $config);
 
     }
