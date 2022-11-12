@@ -23,7 +23,8 @@ class InputMetadataFactoryTest extends TestCase
         $input = $this->factory->createInputMetadata([new TestController(), 'testWithInput']);
         $this->assertEquals(new Input('json', ['foo'], ['groups' => ['foo']]), $input);
 
-        $input = $this->factory->createInputMetadata(\Closure::fromCallable([(new TestController()), 'testWithInput']));
+        $input = $this->factory->createInputMetadata((new TestController())->testWithInput(...));
+
         $this->assertEquals(new Input('json', ['foo'], ['groups' => ['foo']]), $input);
 
         $input = $this->factory->createInputMetadata(new TestController());

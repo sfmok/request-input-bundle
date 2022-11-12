@@ -11,7 +11,6 @@ final class InputMetadataFactory implements InputMetadataFactoryInterface
     public function createInputMetadata(string|object|array $controller): ?Input
     {
         $input = null;
-
         if (\is_array($controller)) {
             $reflection = new \ReflectionMethod($controller[0], $controller[1]);
         } elseif (\is_object($controller) && !$controller instanceof \Closure) {
