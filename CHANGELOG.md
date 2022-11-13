@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+- Update composer.json description
+- Update readme.md
+
 ## 1.2.0
 - Add skip validation in YAML configuration
 - Add Input Attribute for custom configuration per action (format, groups and context)
