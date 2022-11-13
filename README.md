@@ -9,7 +9,7 @@
 - Resolve inputs arguments for controllers actions.
 - Validate DTO inputs objects (An option to enable or disable it).
 - Global YAML configuration
-- Specific Attribute configuration per action
+- Custom Configuration via Input Attribute per controller action
 
 ### Installation
 Require the bundle with composer:
