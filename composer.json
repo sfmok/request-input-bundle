@@ -50,5 +50,5 @@
     "fix-cs": "vendor/bin/php-cs-fixer fix src/",
     "phpstan": "vendor/bin/phpstan analyse src tests"
   },
-  "prefer-stable": true
+  "minimum-stability": "dev"
 }

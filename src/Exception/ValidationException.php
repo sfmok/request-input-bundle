@@ -7,7 +7,7 @@ namespace Sfmok\RequestInput\Exception;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class ValidationException extends BadRequestHttpException
+class ValidationException extends BadRequestHttpException implements ExceptionInterface
 {
     private ConstraintViolationListInterface $violationList;
 
