@@ -7,12 +7,16 @@ namespace Sfmok\RequestInput\Tests\Factory;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Sfmok\RequestInput\Attribute\Input;
+use Sfmok\RequestInput\Exception\DeserializationException;
 use Sfmok\RequestInput\Exception\UnexpectedFormatException;
+use Sfmok\RequestInput\Exception\ValidationException;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Tests\Fixtures\Input\DummyInput;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Prophecy\Prophecy\ObjectProphecy;
@@ -135,6 +139,55 @@ class InputFactoryTest extends TestCase
 
         $inputFactory = $this->createInputFactory(false);
         $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+    }
+
+    /**
+     * @dataProvider provideDataRequestWithFrom
+     */
+    public function testCreateFormRequestWithDeserializationException(Request $request): void
+    {
+        $this->expectException(DeserializationException::class);
+
+        $input = $this->getDummyInput();
+        $data = json_encode($request->request->all());
+
+        $this->serializer
+            ->deserialize($data, $input::class, 'json', [])
+            ->willThrow(UnexpectedValueException::class)
+            ->shouldBeCalledOnce()
+        ;
+
+        $this->validator->validate()->shouldNotBeCalled();
+
+        $inputFactory = $this->createInputFactory(false);
+        $inputFactory->createFromRequest($request, $input::class, $request->getContentType());
+    }
+
+    /**
+     * @dataProvider provideDataRequestWithFrom
+     */
+    public function testCreateFormRequestWithValidationException(Request $request): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $input = $this->getDummyInput();
+        $violations = new ConstraintViolationList([new ConstraintViolation('foo', null, [], null, null, null)]);
+        $data = json_encode($request->request->all());
+
+        $this->serializer
+            ->deserialize($data, $input::class, 'json', [])
+            ->willReturn($input)
+            ->shouldBeCalledOnce()
+        ;
+
+        $this->validator
+            ->validate($input, null, ['Default'])
+            ->willReturn($violations)
+            ->shouldBeCalledOnce()
+        ;
+
+        $inputFactory = $this->createInputFactory(false);
+        $inputFactory->createFromRequest($request, $input::class, $request->getContentType());
     }
 
     public function provideDataRequestWithContent(): iterable
