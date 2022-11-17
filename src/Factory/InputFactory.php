@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\Factory;
 
 use Sfmok\RequestInput\Attribute\Input;
+use Sfmok\RequestInput\Exception\DeserializationException;
 use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\InputInterface;
 use Sfmok\RequestInput\Exception\ValidationException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -42,7 +46,12 @@ final class InputFactory implements InputFactoryInterface
 
         $inputMetadata = $request->attributes->get('_input');
 
-        $input = $this->serializer->deserialize($data, $type, $format, $inputMetadata?->getContext() ?? []);
+        try {
+            $input = $this->serializer->deserialize($data, $type, $format, $inputMetadata?->getContext() ?? []);
+        } catch (UnexpectedValueException $exception) {
+            throw new DeserializationException('Failed to deserialize data.', $exception);
+        }
+
 
         if (!$this->skipValidation) {
             $violations = $this->validator->validate($input, null, $inputMetadata?->getGroups() ?? ['Default']);
