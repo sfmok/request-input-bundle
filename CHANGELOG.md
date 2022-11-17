@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2
+- Handle deserialization exceptions
+- Update composer.json minimum-stability
+- Update readme.md
+
 ## 1.2.1
 - Update composer.json description
 - Update readme.md
