@@ -7,9 +7,9 @@
 
 - Request data supported: `json`, `xml` and `form` based on header content type.
 - Resolve inputs arguments for controllers actions.
-- Validate DTO inputs objects (An option to enable or disable it).
-- Global YAML configuration
-- Custom Configuration via Input Attribute per controller action
+- Validate DTO inputs objects.
+- Global YAML configuration.
+- Custom Configuration via Input Attribute per controller action.
 
 ### Installation
 Require the bundle with composer:
@@ -86,8 +86,36 @@ Content-Type: application/problem+json; charset=utf-8
 }
 ```
 
+### Deserialization (v1.2.2)
+
+Whether the request data contains invalid syntax or invalid attributes types a clear 400 json response will return:
+
+- Data Error
+
+```json
+{
+  "title": "Deserialization Failed",
+  "detail": "Data error",
+  "violations": [
+    {
+      "propertyPath": "title",
+      "message": "This value should be of type string",
+      "currentType": "int"
+    }
+  ]
+}
+```
+- Syntax error:
+```json
+{
+  "title": "Deserialization Failed",
+  "detail": "Syntax error",
+  "violations": []
+}
+```
+
 ### Configuration
-* In case you want to serve a specific input data format for all your DTO inputs with skip validation:
+
 ```yaml
 # config/packages/request_input.yaml
 request_input:
@@ -95,8 +123,8 @@ request_input:
   formats: ['json'] # default value ['json', 'xml', 'form']
   skip_validation: true # default value false
 ```
-- With above configuration RequestInputBundle will convert JSON request data only and skip validation process.
-- You can also use a format even if disabled globally by using attribute input and specify the format explicitly.
+
+You can also override the format using attribute input and specify the format explicitly.
 
 ## License
 
