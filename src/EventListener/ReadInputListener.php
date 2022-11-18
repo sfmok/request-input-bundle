@@ -10,25 +10,18 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 class ReadInputListener
 {
-    public function __construct(
-        private InputMetadataFactoryInterface $inputMetadataFactory,
-        private bool $enabled = true
-    ) {
+    public function __construct(private InputMetadataFactoryInterface $inputMetadataFactory)
+    {
     }
 
     public function onKernelController(ControllerEvent $event): void
     {
-        if (!$this->enabled) {
+        $inputMetadata = $this->inputMetadataFactory->createInputMetadata($event->getController());
+
+        if (!$inputMetadata instanceof Input) {
             return;
         }
 
-        $request = $event->getRequest();
-        $input = $this->inputMetadataFactory->createInputMetadata($event->getController());
-
-        if (!$input instanceof Input) {
-            return;
-        }
-
-        $request->attributes->set('_input', $input);
+        $event->getRequest()->attributes->set('_input', $inputMetadata);
     }
 }

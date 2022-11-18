@@ -25,21 +25,13 @@ class InputArgumentResolverTest extends TestCase
         $this->inputFactory = $this->prophesize(InputFactoryInterface::class);
     }
 
-    public function testSupportsWithNonEnabledInput(): void
-    {
-        $request = new Request();
-        $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
-
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS, false);
-        $this->assertFalse($resolver->supports($request, $argument));
-    }
-
     public function testSupportsWithArgumentTypeNotInput(): void
     {
         $request = new Request();
+        $request->headers->set('Content-Type', 'application/json');
         $argument = new ArgumentMetadata('foo', \stdClass::class, false, false, null);
 
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS, true);
+        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS);
         $this->assertFalse($resolver->supports($request, $argument));
     }
 
@@ -50,10 +42,9 @@ class InputArgumentResolverTest extends TestCase
     {
         $request = new Request();
         $request->headers->set('Content-Type', $contentType);
-
         $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
 
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS, true);
+        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS);
         $this->assertSame($expected, $resolver->supports($request, $argument));
     }
 
@@ -67,7 +58,7 @@ class InputArgumentResolverTest extends TestCase
 
         $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
 
-        $resolver = $this->createArgumentResolver(['json'], true);
+        $resolver = $this->createArgumentResolver(['json']);
         $this->assertSame($expected, $resolver->supports($request, $argument));
     }
 
@@ -82,7 +73,7 @@ class InputArgumentResolverTest extends TestCase
 
         $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
 
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS, true);
+        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS);
         $this->assertSame($expected, $resolver->supports($request, $argument));
     }
 
@@ -95,7 +86,7 @@ class InputArgumentResolverTest extends TestCase
 
         $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
 
-        $resolver = $this->createArgumentResolver([Input::INPUT_SUPPORTED_FORMATS], true);
+        $resolver = $this->createArgumentResolver([Input::INPUT_SUPPORTED_FORMATS]);
 
         $this->inputFactory
             ->createFromRequest($request, $argument->getType(), $request->getContentType())
@@ -145,8 +136,8 @@ class InputArgumentResolverTest extends TestCase
         yield [false, 'multipart/form-data'];
     }
 
-    private function createArgumentResolver(array $formats, bool $enabled): InputArgumentResolver
+    private function createArgumentResolver(array $formats): InputArgumentResolver
     {
-        return new InputArgumentResolver($this->inputFactory->reveal(), $formats , $enabled);
+        return new InputArgumentResolver($this->inputFactory->reveal(), $formats);
     }
 }
