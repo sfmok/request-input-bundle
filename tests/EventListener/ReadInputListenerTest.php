@@ -9,7 +9,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\EventListener\ReadInputListener;
-use Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface;
+use Sfmok\RequestInput\Metadata\InputMetadataFactory;
 use Sfmok\RequestInput\Tests\Fixtures\Controller\TestController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -19,64 +19,39 @@ class ReadInputListenerTest extends TestCase
 {
     use ProphecyTrait;
 
-    private ObjectProphecy $inputMetadataFactory;
     private ObjectProphecy $httpKernel;
 
     protected function setUp(): void
     {
-        $this->inputMetadataFactory = $this->prophesize(InputMetadataFactoryInterface::class);
         $this->httpKernel = $this->prophesize(HttpKernelInterface::class);
     }
 
     public function testOnKernelController(): void
     {
         $request = new Request();
-        $inputMetadata = new Input();
-        $event = $this->getControllerEvent($request);
-        $this->inputMetadataFactory
-            ->createInputMetadata($event->getController())
-            ->willReturn($inputMetadata)
-            ->shouldBeCalledOnce()
-        ;
-
-        $listener = new ReadInputListener($this->inputMetadataFactory->reveal(), true);
-
+        $event = $this->getControllerEvent($request, 'testWithInput');
+        $listener = new ReadInputListener(new InputMetadataFactory());
         $listener->onKernelController($event);
 
-        $this->assertSame($inputMetadata, $request->attributes->get('_input'));
+        self::assertTrue($request->attributes->has('_input'));
+        self::assertInstanceOf(Input::class, $request->attributes->get('_input'));
     }
 
     public function testOnKernelControllerWithoutInput(): void
     {
         $request = new Request();
-        $event = $this->getControllerEvent($request);
-        $this->inputMetadataFactory
-            ->createInputMetadata($event->getController())
-            ->willReturn(null)
-            ->shouldBeCalledOnce()
-        ;
-
-        $listener = new ReadInputListener($this->inputMetadataFactory->reveal(), true);
-
+        $event = $this->getControllerEvent($request, 'testWithoutInput');
+        $listener = new ReadInputListener(new InputMetadataFactory());
         $listener->onKernelController($event);
 
-        $this->assertFalse($request->attributes->has('_input'));
+        self::assertFalse($request->attributes->has('_input'));
     }
 
-    public function testOnKernelControllerWithNonEnabled(): void
-    {
-        $event = $this->getControllerEvent(new Request());
-        $this->inputMetadataFactory->createInputMetadata()->shouldNotBeCalled();
-        $listener = new ReadInputListener($this->inputMetadataFactory->reveal(), false);
-
-        $listener->onKernelController($event);
-    }
-
-    private function getControllerEvent(Request $request): ControllerEvent
+    private function getControllerEvent(Request $request, string $method): ControllerEvent
     {
         return new ControllerEvent(
             $this->httpKernel->reveal(),
-            [new TestController(), 'testWithInput'],
+            [new TestController(), $method],
             $request,
             HttpKernelInterface::MAIN_REQUEST
         );

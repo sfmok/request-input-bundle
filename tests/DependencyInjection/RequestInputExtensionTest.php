@@ -50,20 +50,14 @@ class RequestInputExtensionTest extends TestCase
             InputMetadataFactoryInterface::class
         ];
 
-        $parameters = [
-            'request_input.enabled' => $config['request_input']['enabled'],
-            'request_input.formats' => $config['request_input']['formats'],
-            'request_input.skip_validation' => $config['request_input']['skip_validation'],
-        ];
-
-        $this->assertContainerHas($services, $aliases, $parameters);
+        $this->assertContainerHas($services, $aliases);
 
         $this->assertServiceHasTags(InputArgumentResolver::class, ['controller.argument_value_resolver']);
         $this->assertServiceHasTags(ExceptionListener::class, ['kernel.event_listener']);
         $this->assertServiceHasTags(ReadInputListener::class, ['kernel.event_listener']);
     }
 
-    private function assertContainerHas(array $services, array $aliases = [], array $parameters = []): void
+    private function assertContainerHas(array $services, array $aliases = []): void
     {
         foreach ($services as $service) {
             $this->assertTrue($this->container->hasDefinition($service), sprintf('Definition "%s" not found.', $service));
@@ -72,21 +66,11 @@ class RequestInputExtensionTest extends TestCase
         foreach ($aliases as $alias) {
             $this->assertContainerHasAlias($alias);
         }
-
-        foreach ($parameters as $parameterKey => $parameterValue) {
-            $this->assertContainerHasParameter($parameterKey, $parameterValue);
-        }
     }
 
     private function assertContainerHasAlias(string $alias): void
     {
         $this->assertTrue($this->container->hasAlias($alias), sprintf('Alias "%s" not found.', $alias));
-    }
-
-    private function assertContainerHasParameter(string $parameterKey, $parameterValue): void
-    {
-        $this->assertTrue($this->container->hasParameter($parameterKey), sprintf('Parameter "%s" not found.', $parameterKey));
-        $this->assertSame($this->container->getParameter($parameterKey), $parameterValue);
     }
 
     private function assertServiceHasTags(string $service, array $tags = []): void

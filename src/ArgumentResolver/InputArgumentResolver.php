@@ -13,16 +13,13 @@ use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 
 class InputArgumentResolver implements ArgumentValueResolverInterface
 {
-    public function __construct(
-        private InputFactoryInterface $inputFactory,
-        private array $inputFormats,
-        private bool $enabled = true
-    ) {
+    public function __construct(private InputFactoryInterface $inputFactory, private array $inputFormats)
+    {
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
-        if (!$this->enabled || !is_subclass_of($argument->getType(), InputInterface::class)) {
+        if (!is_subclass_of($argument->getType(), InputInterface::class)) {
             return false;
         }
 
