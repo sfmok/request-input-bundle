@@ -32,9 +32,9 @@ final class InputFactory implements InputFactoryInterface
     {
         if (!\in_array($format, Input::INPUT_SUPPORTED_FORMATS)) {
             throw new UnexpectedFormatException(sprintf(
-                'Only the formats %s are supported. Got %s.',
-                $format,
-                implode(', ', Input::INPUT_SUPPORTED_FORMATS)
+                'Only the formats [%s] are supported. Got %s.',
+                implode(', ', Input::INPUT_SUPPORTED_FORMATS),
+                $format
             ));
         }
 
