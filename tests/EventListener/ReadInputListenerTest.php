@@ -9,6 +9,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\EventListener\ReadInputListener;
+use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\Metadata\InputMetadataFactory;
 use Sfmok\RequestInput\Tests\Fixtures\Controller\TestController;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,6 +46,17 @@ class ReadInputListenerTest extends TestCase
         $listener->onKernelController($event);
 
         self::assertFalse($request->attributes->has('_input'));
+    }
+
+    public function testOnKernelControllerWithUnsupportedFormat(): void
+    {
+        self::expectException(UnexpectedFormatException::class);
+        self::expectExceptionMessageMatches('/Only the formats .+ are supported. Got .+./');
+
+        $request = new Request();
+        $event = $this->getControllerEvent($request, 'testWithInputUnsupportedFormat');
+        $listener = new ReadInputListener(new InputMetadataFactory());
+        $listener->onKernelController($event);
     }
 
     private function getControllerEvent(Request $request, string $method): ControllerEvent

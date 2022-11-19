@@ -21,4 +21,9 @@ class TestController
     public function testWithoutInput(): void
     {
     }
+
+    #[Input(format: 'unsupported')]
+    public function testWithInputUnsupportedFormat(): void
+    {
+    }
 }

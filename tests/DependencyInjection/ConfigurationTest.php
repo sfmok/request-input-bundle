@@ -50,8 +50,8 @@ class ConfigurationTest extends TestCase
      */
     public function testInvalidFormatsConfig(array $formats): void
     {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessageMatches('/Only the formats .+ are supported. Got .+./');
+        self::expectException(InvalidConfigurationException::class);
+        self::expectExceptionMessageMatches('/Only the formats .+ are supported. Got .+./');
 
         $this->processor->processConfiguration($this->configuration, [
             'request_input' => [

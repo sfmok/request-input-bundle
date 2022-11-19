@@ -40,7 +40,7 @@ class Configuration implements ConfigurationInterface
                             }
                             return false;
                         })
-                        ->thenInvalid(sprintf('Only the formats %s are supported. Got %s.', implode(', ', Input::INPUT_SUPPORTED_FORMATS), '%s'))
+                        ->thenInvalid(sprintf('Only the formats [%s] are supported. Got %s.', implode(', ', Input::INPUT_SUPPORTED_FORMATS), '%s'))
                     ->end()
                 ->end()
                 ->booleanNode('skip_validation')
