@@ -7,6 +7,7 @@
 
 - Request data supported: `json`, `xml` and `form` based on header content type.
 - Resolve inputs arguments for controllers actions.
+- Create DTO inputs outside controllers
 - Validate DTO inputs objects.
 - Global YAML configuration.
 - Custom Configuration via Input Attribute per controller action.
@@ -86,7 +87,7 @@ Content-Type: application/problem+json; charset=utf-8
 }
 ```
 
-### Deserialization (v1.2.2)
+### Deserialization
 
 Whether the request data contains invalid syntax or invalid attributes types a clear 400 json response will return:
 
@@ -125,6 +126,34 @@ request_input:
 ```
 
 You can also override the format using attribute input and specify the format explicitly.
+
+### Create DTO input outside controller
+
+You just need to inject `InputFactoryInterface` e.g:
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Manager;
+
+use App\Dto\PostInput;
+use Sfmok\RequestInput\InputInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Sfmok\RequestInput\Factory\InputFactoryInterface;
+
+class PostManager
+{
+    public function __construct(private InputFactoryInterface $inputFactory)
+    {
+    }
+
+    public function getInput(Request $request): InputInterface
+    {
+        return $this->inputFactory->createFromRequest($request, PostInput::class, 'json');
+    }
+}
+```
 
 ## License
 

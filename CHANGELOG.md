@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.3
+- Register services in bundle extension file
+- Fix exceptions issues
+- Add .gitattributes
+
 ## 1.2.2
 - Handle deserialization exceptions
 - Update composer.json minimum-stability
