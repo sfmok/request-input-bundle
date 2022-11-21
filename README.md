@@ -1,5 +1,6 @@
 ## RequestInputBundle
 [![CI](https://github.com/sfmok/request-input/actions/workflows/ci.yml/badge.svg)](https://github.com/sfmok/request-input/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/github/sfmok/request-input-bundle/branch/main/graph/badge.svg?token=9EDGRUPYCB)](https://codecov.io/github/sfmok/request-input-bundle)
 [![Latest Stable Version](http://poser.pugx.org/sfmok/request-input-bundle/v/stable)](https://packagist.org/packages/sfmok/request-input-bundle)
 [![License](http://poser.pugx.org/sfmok/request-input-bundle/license)](https://packagist.org/packages/sfmok/request-input-bundle)
 
