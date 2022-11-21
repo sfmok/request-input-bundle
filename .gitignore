@@ -3,3 +3,5 @@
 /.idea
 .phpunit.cache
 .php-cs-fixer.cache
+.phpunit.result.cache
+coverage.xml
