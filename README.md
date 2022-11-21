@@ -1,5 +1,5 @@
 ## RequestInputBundle
-[![CI](https://github.com/sfmok/request-input/actions/workflows/ci.yml/badge.svg)](https://github.com/sfmok/request-input/actions/workflows/php.yml)
+[![CI](https://github.com/sfmok/request-input/actions/workflows/ci.yml/badge.svg)](https://github.com/sfmok/request-input/actions/workflows/ci.yml)
 [![Latest Stable Version](http://poser.pugx.org/sfmok/request-input-bundle/v/stable)](https://packagist.org/packages/sfmok/request-input-bundle)
 [![License](http://poser.pugx.org/sfmok/request-input-bundle/license)](https://packagist.org/packages/sfmok/request-input-bundle)
 
