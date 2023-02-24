@@ -4,19 +4,9 @@ on:
   push:
     branches:
       - "*.x"
-    paths:
-      - .github/workflows/ci.yml
-      - composer.*
-      - phpunit.xml.dist
-      - tests/**
   pull_request:
     branches:
       - "*.x"
-    paths:
-      - .github/workflows/ci.yml
-      - composer.*
-      - phpunit.xml.dist
-      - tests/**
 
 jobs:
   phpunit:
