@@ -10,8 +10,6 @@ use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\InputInterface;
 use Sfmok\RequestInput\Exception\ValidationException;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\Exception\NotEncodableValueException;
-use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -24,17 +22,21 @@ final class InputFactory implements InputFactoryInterface
     public function __construct(
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
-        private bool $skipValidation
+        private bool $skipValidation,
+        private array $inputFormats
     ) {
     }
 
-    public function createFromRequest(Request $request, string $type, string $format): InputInterface
+    public function createFromRequest(Request $request, string $type, ?string $format): InputInterface
     {
-        if (!\in_array($format, Input::INPUT_SUPPORTED_FORMATS)) {
+        $inputMetadata = $request->attributes->get('_input');
+        $supportedFormats = (array) ($inputMetadata?->getFormat() ?? $this->inputFormats);
+
+        if (!\in_array($format, $supportedFormats, true)) {
             throw new UnexpectedFormatException(sprintf(
-                'Only the formats [%s] are supported. Got %s.',
-                implode(', ', Input::INPUT_SUPPORTED_FORMATS),
-                $format
+                'Unexpected request content type, expected any of [%s]. Got "%s".',
+                implode(', ', $this->getExpectedContentTypes($request, $supportedFormats)),
+                $request->getMimeType($format ?? '')
             ));
         }
 
@@ -43,8 +45,6 @@ final class InputFactory implements InputFactoryInterface
             $data = json_encode($request->request->all());
             $format = Input::INPUT_JSON_FORMAT;
         }
-
-        $inputMetadata = $request->attributes->get('_input');
 
         try {
             $input = $this->serializer->deserialize($data, $type, $format, $inputMetadata?->getContext() ?? []);
@@ -62,5 +62,15 @@ final class InputFactory implements InputFactoryInterface
         }
 
         return $input;
+    }
+
+    private function getExpectedContentTypes(Request $request, array $expectedFormats): array
+    {
+        $expectedContentTypes = [];
+        foreach ($expectedFormats as $format) {
+            $expectedContentTypes = [...$expectedContentTypes, ...$request->getMimeTypes($format)];
+        }
+
+        return $expectedContentTypes;
     }
 }

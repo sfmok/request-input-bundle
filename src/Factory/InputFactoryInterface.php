@@ -9,5 +9,5 @@ use Symfony\Component\HttpFoundation\Request;
 
 interface InputFactoryInterface
 {
-    public function createFromRequest(Request $request, string $type, string $format): InputInterface;
+    public function createFromRequest(Request $request, string $type, ?string $format): InputInterface;
 }

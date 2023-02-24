@@ -37,7 +37,7 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithContent
      */
-    public function testCreateFormRequestWithContent(Request $request): void
+    public function testCreateFromRequestWithContent(Request $request): void
     {
         $input = $this->getDummyInput();
         $violations = new ConstraintViolationList([]);
@@ -61,7 +61,7 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithFrom
      */
-    public function testCreateFormRequestWithForm(Request $request): void
+    public function testCreateFromRequestWithForm(Request $request): void
     {
         $input = $this->getDummyInput();
         $violations = new ConstraintViolationList([]);
@@ -84,12 +84,14 @@ class InputFactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider provideDataUnsupportedFormat
+     * @dataProvider provideDataUnsupportedContentType
      */
-    public function testCreateFormRequestFromUnsupportedFormat(Request $request): void
+    public function testCreateFromRequestWithUnsupportedContentType(Request $request): void
     {
         $this->expectException(UnexpectedFormatException::class);
-        $this->expectExceptionMessageMatches('/Only the formats .+ are supported. Got .+./');
+        $this->expectExceptionMessageMatches(
+            '/Unexpected request content type, expected any of .+. Got .+./'
+        );
 
         $input = $this->getDummyInput();
         $this->serializer->deserialize()->shouldNotBeCalled();
@@ -101,7 +103,7 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithContent
      */
-    public function testCreateFormRequestWithSkipValidation(Request $request): void
+    public function testCreateFromRequestWithSkipValidation(Request $request): void
     {
         $input = $this->getDummyInput();
 
@@ -119,7 +121,7 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithContent
      */
-    public function testCreateFormRequestWithInputMetadata(Request $request): void
+    public function testCreateFromRequestWithInputMetadata(Request $request): void
     {
         $input = $this->getDummyInput();
         $request->attributes->set('_input', new Input(groups: ['foo'], context: ['groups' => 'foo']));
@@ -144,7 +146,7 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithFrom
      */
-    public function testCreateFormRequestWithDeserializationException(Request $request): void
+    public function testCreateFromRequestWithDeserializationException(Request $request): void
     {
         $this->expectException(DeserializationException::class);
 
@@ -166,7 +168,7 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithFrom
      */
-    public function testCreateFormRequestWithValidationException(Request $request): void
+    public function testCreateFromRequestWithValidationException(Request $request): void
     {
         $this->expectException(ValidationException::class);
 
@@ -193,7 +195,6 @@ class InputFactoryTest extends TestCase
     public function provideDataRequestWithContent(): iterable
     {
         yield [new Request(server: ['CONTENT_TYPE' => 'application/json'])];
-        yield [new Request(server: ['CONTENT_TYPE' => 'application/xml'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/x-json'])];
     }
 
@@ -203,9 +204,9 @@ class InputFactoryTest extends TestCase
         yield [new Request(server: ['CONTENT_TYPE' => 'multipart/form-data'])];
     }
 
-    public function provideDataUnsupportedFormat(): iterable
+    public function provideDataUnsupportedContentType(): iterable
     {
-        yield [new Request(server: ['CONTENT_TYPE' => 'text/html'])];
+        yield [new Request()];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/xhtml+xml'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'text/plain'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/javascript'])];
@@ -217,7 +218,12 @@ class InputFactoryTest extends TestCase
 
     private function createInputFactory(bool $skipValidation): InputFactoryInterface
     {
-        return new InputFactory($this->serializer->reveal(), $this->validator->reveal(), $skipValidation);
+        return new InputFactory(
+            $this->serializer->reveal(),
+            $this->validator->reveal(),
+            $skipValidation,
+            Input::INPUT_SUPPORTED_FORMATS
+        );
     }
 
     private function getDummyInput(): DummyInput
