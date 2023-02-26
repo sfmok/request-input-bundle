@@ -23,7 +23,7 @@ class ReadInputListener
             return;
         }
 
-        if (!\in_array($inputMetadata->getFormat(), Input::INPUT_SUPPORTED_FORMATS)) {
+        if (!\in_array($inputMetadata->getFormat(), Input::INPUT_SUPPORTED_FORMATS, true)) {
             throw new UnexpectedFormatException(sprintf(
                 'Only the formats [%s] are supported. Got %s.',
                 implode(', ', Input::INPUT_SUPPORTED_FORMATS),

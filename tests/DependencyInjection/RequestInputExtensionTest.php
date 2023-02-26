@@ -57,6 +57,23 @@ class RequestInputExtensionTest extends TestCase
         $this->assertServiceHasTags(ReadInputListener::class, ['kernel.event_listener']);
     }
 
+    public function testLoadConfigurationWithDisabledOption(): void
+    {
+        (new RequestInputExtension())->load(['request_input' => ['enabled' => false]], $this->container);
+
+        $services = [
+            InputArgumentResolver::class,
+            ExceptionListener::class,
+            ReadInputListener::class,
+            InputFactory::class,
+            InputMetadataFactory::class
+        ];
+
+        foreach ($services as $service) {
+            $this->assertFalse($this->container->hasDefinition($service), sprintf('Definition "%s" is found.', $service));
+        }
+    }
+
     private function assertContainerHas(array $services, array $aliases = []): void
     {
         foreach ($services as $service) {

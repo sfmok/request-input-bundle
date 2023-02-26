@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 use Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver;
-use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Tests\Fixtures\Input\DummyInput;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,119 +24,41 @@ class InputArgumentResolverTest extends TestCase
         $this->inputFactory = $this->prophesize(InputFactoryInterface::class);
     }
 
-    public function testSupportsWithArgumentTypeNotInput(): void
-    {
-        $request = new Request();
-        $request->headers->set('Content-Type', 'application/json');
-        $argument = new ArgumentMetadata('foo', \stdClass::class, false, false, null);
-
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS);
-        $this->assertFalse($resolver->supports($request, $argument));
-    }
-
     /**
-     * @dataProvider provideSupportsWithDefaultGlobalFormats
+     * @dataProvider provideSupportData
      */
-    public function testSupportsWithDefaultGlobalFormats(bool $expected, ?string $contentType): void
+    public function testSupports(mixed $type, bool $expectedResult): void
     {
-        $request = new Request();
-        $request->headers->set('Content-Type', $contentType);
-        $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
-
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS);
-        $this->assertSame($expected, $resolver->supports($request, $argument));
+        $argument = new ArgumentMetadata('foo', $type, false, false, null);
+        $this->assertSame($expectedResult, $this->createArgumentResolver()->supports(new Request(), $argument));
     }
 
-    /**
-     * @dataProvider provideSupportsWithCustomGlobalFormats
-     */
-    public function testSupportsWithCustomGlobalFormats(bool $expected, ?string $contentType): void
-    {
-        $request = new Request();
-        $request->headers->set('Content-Type', $contentType);
-
-        $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
-
-        $resolver = $this->createArgumentResolver(['json']);
-        $this->assertSame($expected, $resolver->supports($request, $argument));
-    }
-
-    /**
-     * @dataProvider provideSupportsWithCustomFormatsInInputAttribute
-     */
-    public function testSupportsWithCustomFormatsInInputAttribute(bool $expected, ?string $contentType): void
-    {
-        $request = new Request();
-        $request->headers->set('Content-Type', $contentType);
-        $request->attributes->set('_input', new Input('xml'));
-
-        $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
-
-        $resolver = $this->createArgumentResolver(Input::INPUT_SUPPORTED_FORMATS);
-        $this->assertSame($expected, $resolver->supports($request, $argument));
-    }
-
-    public function testResolveSucceeds(): void
+    public function testResolve(): void
     {
         $dummyInput = new DummyInput();
-
         $request = new Request();
-        $request->headers->set('Content-Type', 'application/json');
-
-        $argument = new ArgumentMetadata('foo', DummyInput::class, false, false, null);
-
-        $resolver = $this->createArgumentResolver([Input::INPUT_SUPPORTED_FORMATS]);
+        $argument = new ArgumentMetadata('foo', $dummyInput::class, false, false, null);
 
         $this->inputFactory
-            ->createFromRequest($request, $argument->getType(), $request->getContentType())
+            ->createFromRequest($request, $dummyInput::class, $request->getContentType())
             ->shouldBeCalledOnce()
             ->willReturn($dummyInput)
         ;
 
+        $resolver = $this->createArgumentResolver();
         $this->assertEquals([$dummyInput], iterator_to_array($resolver->resolve($request, $argument)));
     }
 
-    public function provideSupportsWithDefaultGlobalFormats(): iterable
+    public function provideSupportData(): iterable
     {
-        yield [false, null];
-        yield [false, 'application/rdf+xml'];
-        yield [false, 'text/html'];
-        yield [false, 'application/javascript'];
-        yield [false, 'text/plain'];
-        yield [false, 'application/ld+json'];
-        yield [true, 'application/json'];
-        yield [true, 'application/xml'];
-        yield [true, 'multipart/form-data'];
+        yield [null, false];
+        yield [\stdClass::class, false];
+        yield ["Foo", false];
+        yield [DummyInput::class, true];
     }
 
-    public function provideSupportsWithCustomGlobalFormats(): iterable
+    private function createArgumentResolver(): InputArgumentResolver
     {
-        yield [false, null];
-        yield [false, 'application/rdf+xml'];
-        yield [false, 'text/html'];
-        yield [false, 'application/javascript'];
-        yield [false, 'text/plain'];
-        yield [false, 'application/ld+json'];
-        yield [true, 'application/json'];
-        yield [false, 'application/xml'];
-        yield [false, 'multipart/form-data'];
-    }
-
-    public function provideSupportsWithCustomFormatsInInputAttribute(): iterable
-    {
-        yield [false, null];
-        yield [false, 'application/rdf+xml'];
-        yield [false, 'text/html'];
-        yield [false, 'application/javascript'];
-        yield [false, 'text/plain'];
-        yield [false, 'application/ld+json'];
-        yield [false, 'application/json'];
-        yield [true, 'application/xml'];
-        yield [false, 'multipart/form-data'];
-    }
-
-    private function createArgumentResolver(array $formats): InputArgumentResolver
-    {
-        return new InputArgumentResolver($this->inputFactory->reveal(), $formats);
+        return new InputArgumentResolver($this->inputFactory->reveal());
     }
 }

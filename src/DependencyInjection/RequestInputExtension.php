@@ -36,6 +36,7 @@ class RequestInputExtension extends Extension
                 '$serializer' => new Reference(SerializerInterface::class),
                 '$validator' => new Reference(ValidatorInterface::class),
                 '$skipValidation' => $config['skip_validation'],
+                '$inputFormats' => $config['formats'],
             ])
             ->setPublic(false)
         ;
@@ -48,7 +49,6 @@ class RequestInputExtension extends Extension
         $container->register(InputArgumentResolver::class)
             ->setArguments([
                 '$inputFactory' => new Reference(InputFactoryInterface::class),
-                '$inputFormats' => $config['formats'],
             ])
             ->addTag('controller.argument_value_resolver', ['priority' => 40])
             ->setPublic(false)

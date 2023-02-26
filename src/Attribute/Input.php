@@ -21,7 +21,7 @@ class Input
 
     public function getFormat(): string
     {
-        return $this->format;
+        return mb_strtolower($this->format);
     }
 
     public function getGroups(): array
