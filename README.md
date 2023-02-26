@@ -115,7 +115,7 @@ Whether the request data contains invalid syntax or invalid attributes types a c
 - Syntax error:
 ```json
 {
-  "title": 12,
+  "title": "foo",
 }
 ```
 ```json
