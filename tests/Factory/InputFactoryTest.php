@@ -8,12 +8,12 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\Exception\DeserializationException;
-use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\Exception\ValidationException;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Tests\Fixtures\Input\DummyInput;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -37,10 +37,9 @@ class InputFactoryTest extends TestCase
     /**
      * @dataProvider provideDataRequestWithContent
      */
-    public function testCreateFormRequestWithContent(Request $request): void
+    public function testCreateFromRequestWithContent(Request $request): void
     {
         $input = $this->getDummyInput();
-        $violations = new ConstraintViolationList([]);
 
         $this->serializer
             ->deserialize($request->getContent(), $input::class, $request->getContentType(), [])
@@ -50,58 +49,72 @@ class InputFactoryTest extends TestCase
 
         $this->validator
             ->validate($input, null, ['Default'])
-            ->willReturn($violations)
+            ->willReturn(new ConstraintViolationList([]))
             ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
     }
 
     /**
      * @dataProvider provideDataRequestWithFrom
      */
-    public function testCreateFormRequestWithForm(Request $request): void
+    public function testCreateFromRequestWithForm(Request $request): void
     {
         $input = $this->getDummyInput();
-        $violations = new ConstraintViolationList([]);
         $data = json_encode($request->request->all());
 
         $this->serializer
-            ->deserialize($data, $input::class, 'json', [])
+            ->deserialize($data, $input::class, Input::INPUT_JSON_FORMAT, [])
             ->willReturn($input)
             ->shouldBeCalledOnce()
         ;
 
         $this->validator
             ->validate($input, null, ['Default'])
-            ->willReturn($violations)
+            ->willReturn(new ConstraintViolationList([]))
             ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
     }
 
     /**
-     * @dataProvider provideDataUnsupportedFormat
+     * @dataProvider provideDataUnsupportedContentType
      */
-    public function testCreateFormRequestFromUnsupportedFormat(Request $request): void
+    public function testCreateFromRequestWithUnsupportedContentType(Request $request): void
     {
-        $this->expectException(UnexpectedFormatException::class);
-        $this->expectExceptionMessageMatches('/Only the formats .+ are supported. Got .+./');
+        $this->expectException(UnsupportedMediaTypeHttpException::class);
+        $this->expectExceptionMessageMatches(
+            '/The content-type .+. is not supported. Supported MIME types are .+./'
+        );
 
-        $input = $this->getDummyInput();
         $this->serializer->deserialize()->shouldNotBeCalled();
         $this->validator->validate()->shouldNotBeCalled();
         $inputFactory = $this->createInputFactory(false);
-        $inputFactory->createFromRequest($request, $input::class, $request->getContentType());
+        $inputFactory->createFromRequest($request, DummyInput::class);
+    }
+
+    /**
+     * @dataProvider provideDataEmptyContentType
+     */
+    public function testCreateFromRequestWithEmptyContentType(Request $request): void
+    {
+        $this->expectException(UnsupportedMediaTypeHttpException::class);
+        $this->expectExceptionMessage('The "Content-Type" header must exist and not empty.');
+
+        $this->serializer->deserialize()->shouldNotBeCalled();
+        $this->validator->validate()->shouldNotBeCalled();
+        $inputFactory = $this->createInputFactory(false);
+        $inputFactory->createFromRequest($request, DummyInput::class);
     }
 
     /**
      * @dataProvider provideDataRequestWithContent
      */
-    public function testCreateFormRequestWithSkipValidation(Request $request): void
+    public function testCreateFromRequestWithSkipValidation(Request $request): void
     {
         $input = $this->getDummyInput();
 
@@ -113,13 +126,13 @@ class InputFactoryTest extends TestCase
 
         $this->validator->validate()->shouldNotBeCalled();
         $inputFactory = $this->createInputFactory(true);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
     }
 
     /**
      * @dataProvider provideDataRequestWithContent
      */
-    public function testCreateFormRequestWithInputMetadata(Request $request): void
+    public function testCreateFromRequestWithInputMetadata(Request $request): void
     {
         $input = $this->getDummyInput();
         $request->attributes->set('_input', new Input(groups: ['foo'], context: ['groups' => 'foo']));
@@ -138,21 +151,19 @@ class InputFactoryTest extends TestCase
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class, $request->getContentType()));
+        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
     }
 
     /**
      * @dataProvider provideDataRequestWithFrom
      */
-    public function testCreateFormRequestWithDeserializationException(Request $request): void
+    public function testCreateFromRequestWithDeserializationException(Request $request): void
     {
         $this->expectException(DeserializationException::class);
-
-        $input = $this->getDummyInput();
         $data = json_encode($request->request->all());
 
         $this->serializer
-            ->deserialize($data, $input::class, 'json', [])
+            ->deserialize($data, DummyInput::class, 'json', [])
             ->willThrow(UnexpectedValueException::class)
             ->shouldBeCalledOnce()
         ;
@@ -160,18 +171,17 @@ class InputFactoryTest extends TestCase
         $this->validator->validate()->shouldNotBeCalled();
 
         $inputFactory = $this->createInputFactory(false);
-        $inputFactory->createFromRequest($request, $input::class, $request->getContentType());
+        $inputFactory->createFromRequest($request, DummyInput::class);
     }
 
     /**
      * @dataProvider provideDataRequestWithFrom
      */
-    public function testCreateFormRequestWithValidationException(Request $request): void
+    public function testCreateFromRequestWithValidationException(Request $request): void
     {
         $this->expectException(ValidationException::class);
 
         $input = $this->getDummyInput();
-        $violations = new ConstraintViolationList([new ConstraintViolation('foo', null, [], null, null, null)]);
         $data = json_encode($request->request->all());
 
         $this->serializer
@@ -182,18 +192,17 @@ class InputFactoryTest extends TestCase
 
         $this->validator
             ->validate($input, null, ['Default'])
-            ->willReturn($violations)
+            ->willReturn(new ConstraintViolationList([new ConstraintViolation('foo', null, [], null, null, null)]))
             ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $inputFactory->createFromRequest($request, $input::class, $request->getContentType());
+        $inputFactory->createFromRequest($request, $input::class);
     }
 
     public function provideDataRequestWithContent(): iterable
     {
         yield [new Request(server: ['CONTENT_TYPE' => 'application/json'])];
-        yield [new Request(server: ['CONTENT_TYPE' => 'application/xml'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/x-json'])];
     }
 
@@ -203,9 +212,8 @@ class InputFactoryTest extends TestCase
         yield [new Request(server: ['CONTENT_TYPE' => 'multipart/form-data'])];
     }
 
-    public function provideDataUnsupportedFormat(): iterable
+    public function provideDataUnsupportedContentType(): iterable
     {
-        yield [new Request(server: ['CONTENT_TYPE' => 'text/html'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/xhtml+xml'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'text/plain'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/javascript'])];
@@ -215,9 +223,20 @@ class InputFactoryTest extends TestCase
         yield [new Request(server: ['CONTENT_TYPE' => 'application/rss+xml'])];
     }
 
+    public function provideDataEmptyContentType(): iterable
+    {
+        yield [new Request()];
+        yield [new Request(server: ['CONTENT_TYPE' => ''])];
+    }
+
     private function createInputFactory(bool $skipValidation): InputFactoryInterface
     {
-        return new InputFactory($this->serializer->reveal(), $this->validator->reveal(), $skipValidation);
+        return new InputFactory(
+            $this->serializer->reveal(),
+            $this->validator->reveal(),
+            $skipValidation,
+            Input::INPUT_SUPPORTED_FORMATS
+        );
     }
 
     private function getDummyInput(): DummyInput

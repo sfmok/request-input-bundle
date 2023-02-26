@@ -6,12 +6,10 @@ namespace Sfmok\RequestInput\Factory;
 
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\Exception\DeserializationException;
-use Sfmok\RequestInput\Exception\UnexpectedFormatException;
 use Sfmok\RequestInput\InputInterface;
 use Sfmok\RequestInput\Exception\ValidationException;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\Exception\NotEncodableValueException;
-use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -24,27 +22,38 @@ final class InputFactory implements InputFactoryInterface
     public function __construct(
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
-        private bool $skipValidation
+        private bool $skipValidation,
+        private array $inputFormats
     ) {
     }
 
-    public function createFromRequest(Request $request, string $type, string $format): InputInterface
+    public function createFromRequest(Request $request, string $type): InputInterface
     {
-        if (!\in_array($format, Input::INPUT_SUPPORTED_FORMATS)) {
-            throw new UnexpectedFormatException(sprintf(
-                'Only the formats [%s] are supported. Got %s.',
-                implode(', ', Input::INPUT_SUPPORTED_FORMATS),
-                $format
-            ));
+        // @codeCoverageIgnoreStart
+        if (\func_num_args() > 2) {
+            @trigger_error("Third argument of 'InputFactory::createFromRequest' is not in use and is removed, however the argument in the callers code can be removed without side-effects.", \E_USER_DEPRECATED);
+        }
+        // @codeCoverageIgnoreEnd
+
+        $contentType = $request->headers->get('CONTENT_TYPE');
+        if (null === $contentType || '' === $contentType) {
+            throw new UnsupportedMediaTypeHttpException('The "Content-Type" header must exist and not empty.');
+        }
+
+        $inputMetadata = $request->attributes->get('_input');
+        $formats = (array) ($inputMetadata?->getFormat() ?? $this->inputFormats);
+        $supportedMimeTypes = $this->getSupportedMimeTypes($request, $formats);
+
+        if (!\in_array($contentType, $supportedMimeTypes, true)) {
+            throw new UnsupportedMediaTypeHttpException(sprintf('The content-type "%s" is not supported. Supported MIME types are "%s".', $contentType, implode('", "', $supportedMimeTypes)));
         }
 
         $data = $request->getContent();
+        $format = $request->getContentType();
         if (Input::INPUT_FORM_FORMAT === $format) {
             $data = json_encode($request->request->all());
             $format = Input::INPUT_JSON_FORMAT;
         }
-
-        $inputMetadata = $request->attributes->get('_input');
 
         try {
             $input = $this->serializer->deserialize($data, $type, $format, $inputMetadata?->getContext() ?? []);
@@ -62,5 +71,15 @@ final class InputFactory implements InputFactoryInterface
         }
 
         return $input;
+    }
+
+    private function getSupportedMimeTypes(Request $request, array $formats): array
+    {
+        $mimeTypes = [];
+        foreach ($formats as $format) {
+            $mimeTypes = [...$mimeTypes, ...$request->getMimeTypes($format)];
+        }
+
+        return $mimeTypes;
     }
 }

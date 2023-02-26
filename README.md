@@ -6,7 +6,7 @@
 
 **RequestInputBundle** converts request data into DTO inputs objects with validation.
 
-- Request data supported: `json`, `xml` and `form` based on header content type.
+- Request data supported: `json`, `xml` and `form` based on `Content-Type` header.
 - Resolve inputs arguments for controllers actions.
 - Create DTO inputs outside controllers
 - Validate DTO inputs objects.
@@ -96,6 +96,11 @@ Whether the request data contains invalid syntax or invalid attributes types a c
 
 ```json
 {
+  "title": 12
+}
+```
+```json
+{
   "title": "Deserialization Failed",
   "detail": "Data error",
   "violations": [
@@ -108,6 +113,11 @@ Whether the request data contains invalid syntax or invalid attributes types a c
 }
 ```
 - Syntax error:
+```json
+{
+  "title": 12,
+}
+```
 ```json
 {
   "title": "Deserialization Failed",
@@ -151,7 +161,7 @@ class PostManager
 
     public function getInput(Request $request): InputInterface
     {
-        return $this->inputFactory->createFromRequest($request, PostInput::class, 'json');
+        return $this->inputFactory->createFromRequest($request, PostInput::class);
     }
 }
 ```

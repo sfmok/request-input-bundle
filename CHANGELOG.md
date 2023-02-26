@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.5
+- Fix [#10](https://github.com/sfmok/request-input-bundle/issues/10) issue - throw `UnsupportedMediaTypeHttpException` in case `Content-Type` header is missing or unsupported.
+
+## 1.2.4
+- Update workflow to support dependencies checking
+- Update readme file
+- Update .gitignore file
+- Fix dependencies issue
+
 ## 1.2.3
 - Register services in bundle extension file
 - Fix exceptions issues
