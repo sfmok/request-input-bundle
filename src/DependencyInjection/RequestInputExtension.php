@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\DependencyInjection;
 
+use Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Metadata\InputMetadataFactory;
 use Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface;
 use Sfmok\RequestInput\EventListener\ReadInputListener;
 use Sfmok\RequestInput\EventListener\ExceptionListener;
-use Sfmok\RequestInput\ValueResolver\InputValueResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -46,7 +46,7 @@ class RequestInputExtension extends Extension
         $container->setAlias(InputFactoryInterface::class, InputFactory::class)->setPublic(false);
         $container->setAlias(InputMetadataFactoryInterface::class, InputMetadataFactory::class)->setPublic(false);
 
-        $container->register(InputValueResolver::class)
+        $container->register(InputArgumentResolver::class)
             ->setArguments([
                 '$inputFactory' => new Reference(InputFactoryInterface::class),
             ])

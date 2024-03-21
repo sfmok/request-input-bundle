@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\Tests\EventListener;
 
 use PHPUnit\Framework\TestCase;
+use Prophecy\PhpUnit\ProphecyTrait;
+use Prophecy\Prophecy\ObjectProphecy;
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\EventListener\ReadInputListener;
 use Sfmok\RequestInput\Exception\UnexpectedFormatException;
@@ -16,6 +18,15 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class ReadInputListenerTest extends TestCase
 {
+    use ProphecyTrait;
+
+    private ObjectProphecy $httpKernel;
+
+    protected function setUp(): void
+    {
+        $this->httpKernel = $this->prophesize(HttpKernelInterface::class);
+    }
+
     public function testOnKernelController(): void
     {
         $request = new Request();
@@ -51,7 +62,7 @@ class ReadInputListenerTest extends TestCase
     private function getControllerEvent(Request $request, string $method): ControllerEvent
     {
         return new ControllerEvent(
-            $this->createMock(HttpKernelInterface::class),
+            $this->httpKernel->reveal(),
             [new TestController(), $method],
             $request,
             HttpKernelInterface::MAIN_REQUEST
