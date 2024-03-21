@@ -7,4 +7,3 @@
 .phpunit.result.cache
 coverage.xml
 .result
-flake.lock
