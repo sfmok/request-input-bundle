@@ -67,7 +67,7 @@ class PostController
 ### Validations
 - Response header
 ```
-Content-Type: application/json; charset=utf-8
+Content-Type: application/problem+json; charset=utf-8
 ```
 - Response body
 ```json
