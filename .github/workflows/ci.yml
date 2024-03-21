@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.0"
+          - "8.1"
           - "8.2"
         dependencies:
           - "highest"
@@ -27,7 +27,7 @@ jobs:
           # Tests the lowest set of dependencies
           - dependencies: "lowest"
             stability: "stable"
-            php-version: "8.0"
+            php-version: "8.1"
           # Tests the highest set of dependencies
           - dependencies: "highest"
             stability: "dev"
