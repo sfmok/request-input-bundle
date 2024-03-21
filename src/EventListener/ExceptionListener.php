@@ -25,7 +25,7 @@ class ExceptionListener
             return;
         }
 
-        $headers = ['Content-Type' => 'application/json; charset=utf-8'];
+        $headers = ['Content-Type' => 'application/problem+json; charset=utf-8'];
 
         if ($exception instanceof ValidationException) {
             $event->setResponse(new Response(
