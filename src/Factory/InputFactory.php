@@ -27,13 +27,11 @@ final class InputFactory implements InputFactoryInterface
     ) {
     }
 
-    public function createFromRequest(Request $request, string $type): InputInterface
+    public function createFromRequest(Request $request, string $type): iterable
     {
-        // @codeCoverageIgnoreStart
-        if (\func_num_args() > 2) {
-            @trigger_error("Third argument of 'InputFactory::createFromRequest' is not in use and is removed, however the argument in the callers code can be removed without side-effects.", \E_USER_DEPRECATED);
+        if (!is_subclass_of($type, InputInterface::class)) {
+            return [];
         }
-        // @codeCoverageIgnoreEnd
 
         $contentType = $request->headers->get('CONTENT_TYPE');
         if (null === $contentType || '' === $contentType) {
@@ -49,7 +47,7 @@ final class InputFactory implements InputFactoryInterface
         }
 
         $data = $request->getContent();
-        $format = $request->getContentType();
+        $format = $request->getContentTypeFormat();
         if (Input::INPUT_FORM_FORMAT === $format) {
             $data = json_encode($request->request->all());
             $format = Input::INPUT_JSON_FORMAT;
@@ -70,14 +68,14 @@ final class InputFactory implements InputFactoryInterface
             }
         }
 
-        return $input;
+        return [$input];
     }
 
     private function getSupportedMimeTypes(Request $request, array $formats): array
     {
         $mimeTypes = [];
         foreach ($formats as $format) {
-            $mimeTypes = [...$mimeTypes, ...$request->getMimeTypes($format)];
+            $mimeTypes = array_merge($mimeTypes, $request->getMimeTypes($format));
         }
 
         return $mimeTypes;

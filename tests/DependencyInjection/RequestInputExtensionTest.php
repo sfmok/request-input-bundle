@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
-use Sfmok\RequestInput\ArgumentResolver\InputArgumentResolver;
+use Sfmok\RequestInput\ValueResolver\InputValueResolver;
 use Sfmok\RequestInput\DependencyInjection\RequestInputExtension;
 use Sfmok\RequestInput\EventListener\ExceptionListener;
 use Sfmok\RequestInput\EventListener\ReadInputListener;
@@ -38,7 +38,7 @@ class RequestInputExtensionTest extends TestCase
         (new RequestInputExtension())->load($config, $this->container);
 
         $services = [
-            InputArgumentResolver::class,
+            InputValueResolver::class,
             ExceptionListener::class,
             ReadInputListener::class,
             InputFactory::class,
@@ -52,7 +52,7 @@ class RequestInputExtensionTest extends TestCase
 
         $this->assertContainerHas($services, $aliases);
 
-        $this->assertServiceHasTags(InputArgumentResolver::class, ['controller.argument_value_resolver']);
+        $this->assertServiceHasTags(InputValueResolver::class, ['controller.argument_value_resolver']);
         $this->assertServiceHasTags(ExceptionListener::class, ['kernel.event_listener']);
         $this->assertServiceHasTags(ReadInputListener::class, ['kernel.event_listener']);
     }
@@ -62,7 +62,7 @@ class RequestInputExtensionTest extends TestCase
         (new RequestInputExtension())->load(['request_input' => ['enabled' => false]], $this->container);
 
         $services = [
-            InputArgumentResolver::class,
+            InputValueResolver::class,
             ExceptionListener::class,
             ReadInputListener::class,
             InputFactory::class,
