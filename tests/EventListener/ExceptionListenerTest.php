@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\Tests\EventListener;
 
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
-use Prophecy\Prophecy\ObjectProphecy;
 use Sfmok\RequestInput\EventListener\ExceptionListener;
 use Sfmok\RequestInput\Exception\DeserializationException;
 use Sfmok\RequestInput\Exception\ValidationException;
@@ -21,15 +19,13 @@ use Symfony\Component\Validator\ConstraintViolationList;
 
 class ExceptionListenerTest extends TestCase
 {
-    use ProphecyTrait;
-
-    private ObjectProphecy $serializer;
-    private ObjectProphecy $httpKernel;
+    private SerializerInterface $serializer;
+    private HttpKernelInterface $httpKernel;
 
     protected function setUp(): void
     {
-        $this->serializer = $this->prophesize(SerializerInterface::class);
-        $this->httpKernel = $this->prophesize(HttpKernelInterface::class);
+        $this->serializer = $this->createMock(SerializerInterface::class);
+        $this->httpKernel = $this->createMock(HttpKernelInterface::class);
     }
 
     public function testOnKernelExceptionWithValidationException(): void
@@ -37,11 +33,15 @@ class ExceptionListenerTest extends TestCase
         $serializedConstraintViolationList = '{"foo": "bar"}';
         $list = new ConstraintViolationList([]);
 
-        $this->serializer->serialize($list, 'json')->willReturn($serializedConstraintViolationList)->shouldBeCalled();
+        $this->serializer->expects(self::once())
+            ->method('serialize')
+            ->with($list, 'json')
+            ->willReturn($serializedConstraintViolationList)
+        ;
 
-        $listener = new ExceptionListener($this->serializer->reveal());
+        $listener = new ExceptionListener($this->serializer);
         $event = new ExceptionEvent(
-            $this->httpKernel->reveal(),
+            $this->httpKernel,
             new Request(),
             HttpKernelInterface::MAIN_REQUEST,
             new ValidationException($list)
@@ -53,15 +53,15 @@ class ExceptionListenerTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame($serializedConstraintViolationList, $response->getContent());
         $this->assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
-        $this->assertSame('application/problem+json; charset=utf-8', $response->headers->get('Content-Type'));
+        $this->assertSame('application/json; charset=utf-8', $response->headers->get('Content-Type'));
     }
 
     public function testOnKernelExceptionWithDenormalizationExceptionDataError(): void
     {
         $previous = NotNormalizableValueException::createForUnexpectedDataType('test', [], ['string'], 'foo');
-        $listener = new ExceptionListener($this->serializer->reveal());
+        $listener = new ExceptionListener($this->serializer);
         $event = new ExceptionEvent(
-            $this->httpKernel->reveal(),
+            $this->httpKernel,
             new Request(),
             HttpKernelInterface::MAIN_REQUEST,
             new DeserializationException('Deserialization Failed', $previous)
@@ -72,7 +72,7 @@ class ExceptionListenerTest extends TestCase
         $response = $event->getResponse();
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
-        $this->assertSame('application/problem+json; charset=utf-8', $response->headers->get('Content-Type'));
+        $this->assertSame('application/json; charset=utf-8', $response->headers->get('Content-Type'));
         $this->assertSame(json_encode([
             'title' => 'Deserialization Failed',
             'detail' => 'Data error',
@@ -87,9 +87,9 @@ class ExceptionListenerTest extends TestCase
     public function testOnKernelExceptionWithDenormalizationExceptionSyntaxError(): void
     {
         $previous = new NotEncodableValueException('Syntax error');
-        $listener = new ExceptionListener($this->serializer->reveal());
+        $listener = new ExceptionListener($this->serializer);
         $event = new ExceptionEvent(
-            $this->httpKernel->reveal(),
+            $this->httpKernel,
             new Request(),
             HttpKernelInterface::MAIN_REQUEST,
             new DeserializationException('Deserialization Failed', $previous)
@@ -100,7 +100,7 @@ class ExceptionListenerTest extends TestCase
         $response = $event->getResponse();
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
-        $this->assertSame('application/problem+json; charset=utf-8', $response->headers->get('Content-Type'));
+        $this->assertSame('application/json; charset=utf-8', $response->headers->get('Content-Type'));
         $this->assertSame(json_encode([
             'title' => 'Deserialization Failed',
             'detail' => 'Syntax error',
@@ -110,11 +110,11 @@ class ExceptionListenerTest extends TestCase
 
     public function testOnKernelExceptionWithoutValidationException(): void
     {
-        $this->serializer->serialize()->shouldNotBeCalled();
+        $this->serializer->expects(self::never())->method('deserialize');
 
-        $listener = new ExceptionListener($this->serializer->reveal());
+        $listener = new ExceptionListener($this->serializer);
         $event = new ExceptionEvent(
-            $this->httpKernel->reveal(),
+            $this->httpKernel,
             new Request(),
             HttpKernelInterface::MAIN_REQUEST,
             new \Exception()

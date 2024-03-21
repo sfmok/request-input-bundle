@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit colors="true" bootstrap="vendor/autoload.php">
-  <coverage>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" colors="true" bootstrap="vendor/autoload.php" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd">
+  <testsuites>
+    <testsuite name="RequestInputBundle for the Symfony Framework">
+      <directory>./tests</directory>
+    </testsuite>
+  </testsuites>
+  <source>
     <include>
       <directory>.</directory>
     </include>
@@ -8,10 +13,5 @@
       <directory>./tests</directory>
       <directory>./vendor</directory>
     </exclude>
-  </coverage>
-  <testsuites>
-    <testsuite name="RequestInputBundle for the Symfony Framework">
-      <directory>./tests</directory>
-    </testsuite>
-  </testsuites>
+  </source>
 </phpunit>

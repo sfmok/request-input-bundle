@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Tests\Factory;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\Exception\DeserializationException;
 use Sfmok\RequestInput\Exception\ValidationException;
@@ -19,71 +19,66 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Prophecy\Prophecy\ObjectProphecy;
 
 class InputFactoryTest extends TestCase
 {
-    use ProphecyTrait;
-
-    private ObjectProphecy $validator;
-    private ObjectProphecy $serializer;
+    private ValidatorInterface $validator;
+    private SerializerInterface $serializer;
 
     protected function setUp(): void
     {
-        $this->validator = $this->prophesize(ValidatorInterface::class);
-        $this->serializer = $this->prophesize(SerializerInterface::class);
+        $this->validator = $this->createMock(ValidatorInterface::class);
+        $this->serializer = $this->createMock(SerializerInterface::class);
     }
 
-    /**
-     * @dataProvider provideDataRequestWithContent
-     */
+    #[DataProvider('provideDataRequestWithContent')]
     public function testCreateFromRequestWithContent(Request $request): void
     {
         $input = $this->getDummyInput();
 
         $this->serializer
-            ->deserialize($request->getContent(), $input::class, $request->getContentType(), [])
+            ->expects(self::once())
+            ->method('deserialize')
+            ->with($request->getContent(), $input::class, $request->getContentTypeFormat(), [])
             ->willReturn($input)
-            ->shouldBeCalledOnce()
         ;
 
         $this->validator
-            ->validate($input, null, ['Default'])
+            ->expects(self::once())
+            ->method('validate')
+            ->with($input, null, ['Default'])
             ->willReturn(new ConstraintViolationList([]))
-            ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
+        $this->assertEquals([$input], $inputFactory->createFromRequest($request, $input::class));
     }
 
-    /**
-     * @dataProvider provideDataRequestWithFrom
-     */
+    #[DataProvider('provideDataRequestWithForm')]
     public function testCreateFromRequestWithForm(Request $request): void
     {
         $input = $this->getDummyInput();
         $data = json_encode($request->request->all());
 
         $this->serializer
-            ->deserialize($data, $input::class, Input::INPUT_JSON_FORMAT, [])
+            ->expects(self::once())
+            ->method('deserialize')
+            ->with($data, $input::class, Input::INPUT_JSON_FORMAT)
             ->willReturn($input)
-            ->shouldBeCalledOnce()
         ;
 
         $this->validator
-            ->validate($input, null, ['Default'])
+            ->expects(self::once())
+            ->method('validate')
+            ->with($input, null, ['Default'])
             ->willReturn(new ConstraintViolationList([]))
-            ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
+        $this->assertEquals([$input], $inputFactory->createFromRequest($request, $input::class));
     }
 
-    /**
-     * @dataProvider provideDataUnsupportedContentType
-     */
+    #[DataProvider('provideDataUnsupportedContentType')]
     public function testCreateFromRequestWithUnsupportedContentType(Request $request): void
     {
         $this->expectException(UnsupportedMediaTypeHttpException::class);
@@ -91,47 +86,42 @@ class InputFactoryTest extends TestCase
             '/The content-type .+. is not supported. Supported MIME types are .+./'
         );
 
-        $this->serializer->deserialize()->shouldNotBeCalled();
-        $this->validator->validate()->shouldNotBeCalled();
+        $this->serializer->expects(self::never())->method('deserialize');
+        $this->validator->expects(self::never())->method('validate');
         $inputFactory = $this->createInputFactory(false);
         $inputFactory->createFromRequest($request, DummyInput::class);
     }
 
-    /**
-     * @dataProvider provideDataEmptyContentType
-     */
+    #[DataProvider('provideDataEmptyContentType')]
     public function testCreateFromRequestWithEmptyContentType(Request $request): void
     {
         $this->expectException(UnsupportedMediaTypeHttpException::class);
         $this->expectExceptionMessage('The "Content-Type" header must exist and not empty.');
 
-        $this->serializer->deserialize()->shouldNotBeCalled();
-        $this->validator->validate()->shouldNotBeCalled();
+        $this->serializer->expects(self::never())->method('deserialize');
+        $this->validator->expects(self::never())->method('validate');
         $inputFactory = $this->createInputFactory(false);
         $inputFactory->createFromRequest($request, DummyInput::class);
     }
 
-    /**
-     * @dataProvider provideDataRequestWithContent
-     */
+    #[DataProvider('provideDataRequestWithContent')]
     public function testCreateFromRequestWithSkipValidation(Request $request): void
     {
         $input = $this->getDummyInput();
 
         $this->serializer
-            ->deserialize($request->getContent(), $input::class, $request->getContentType(), [])
+            ->expects(self::once())
+            ->method('deserialize')
+            ->with($request->getContent(), $input::class, $request->getContentTypeFormat())
             ->willReturn($input)
-            ->shouldBeCalledOnce()
         ;
 
-        $this->validator->validate()->shouldNotBeCalled();
+        $this->validator->expects(self::never())->method('validate');
         $inputFactory = $this->createInputFactory(true);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
+        $this->assertEquals([$input], $inputFactory->createFromRequest($request, $input::class));
     }
 
-    /**
-     * @dataProvider provideDataRequestWithContent
-     */
+    #[DataProvider('provideDataRequestWithContent')]
     public function testCreateFromRequestWithInputMetadata(Request $request): void
     {
         $input = $this->getDummyInput();
@@ -139,44 +129,46 @@ class InputFactoryTest extends TestCase
         $violations = new ConstraintViolationList([]);
 
         $this->serializer
-            ->deserialize($request->getContent(), $input::class, $request->getContentType(), ['groups' => 'foo'])
+            ->expects(self::once())
+            ->method('deserialize')
+            ->with($request->getContent(), $input::class, $request->getContentTypeFormat(), ['groups' => 'foo'])
             ->willReturn($input)
-            ->shouldBeCalledOnce()
         ;
 
         $this->validator
-            ->validate($input, null, ['foo'])
+            ->expects(self::once())
+            ->method('validate')
+            ->with($input, null, ['foo'])
             ->willReturn($violations)
-            ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
-        $this->assertEquals($input, $inputFactory->createFromRequest($request, $input::class));
+        $this->assertEquals([$input], $inputFactory->createFromRequest($request, $input::class));
     }
 
-    /**
-     * @dataProvider provideDataRequestWithFrom
-     */
+    #[DataProvider('provideDataRequestWithForm')]
     public function testCreateFromRequestWithDeserializationException(Request $request): void
     {
         $this->expectException(DeserializationException::class);
         $data = json_encode($request->request->all());
 
         $this->serializer
-            ->deserialize($data, DummyInput::class, 'json', [])
-            ->willThrow(UnexpectedValueException::class)
-            ->shouldBeCalledOnce()
+            ->expects(self::once())
+            ->method('deserialize')
+            ->with($data, DummyInput::class, 'json', [])
+            ->willThrowException(new UnexpectedValueException())
         ;
 
-        $this->validator->validate()->shouldNotBeCalled();
+        $this->validator->expects(self::never())->method('validate');
 
         $inputFactory = $this->createInputFactory(false);
         $inputFactory->createFromRequest($request, DummyInput::class);
     }
 
     /**
-     * @dataProvider provideDataRequestWithFrom
+     * @dataProvider provideDataRequestWithForm
      */
+    #[DataProvider('provideDataRequestWithForm')]
     public function testCreateFromRequestWithValidationException(Request $request): void
     {
         $this->expectException(ValidationException::class);
@@ -185,34 +177,36 @@ class InputFactoryTest extends TestCase
         $data = json_encode($request->request->all());
 
         $this->serializer
-            ->deserialize($data, $input::class, 'json', [])
+            ->expects(self::once())
+            ->method('deserialize')
+            ->with($data, $input::class, 'json', [])
             ->willReturn($input)
-            ->shouldBeCalledOnce()
         ;
 
         $this->validator
-            ->validate($input, null, ['Default'])
+            ->expects(self::once())
+            ->method('validate')
+            ->with($input, null, ['Default'])
             ->willReturn(new ConstraintViolationList([new ConstraintViolation('foo', null, [], null, null, null)]))
-            ->shouldBeCalledOnce()
         ;
 
         $inputFactory = $this->createInputFactory(false);
         $inputFactory->createFromRequest($request, $input::class);
     }
 
-    public function provideDataRequestWithContent(): iterable
+    public static function provideDataRequestWithContent(): iterable
     {
         yield [new Request(server: ['CONTENT_TYPE' => 'application/json'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'application/x-json'])];
     }
 
-    public function provideDataRequestWithFrom(): iterable
+    public static function provideDataRequestWithForm(): iterable
     {
         yield [new Request(server: ['CONTENT_TYPE' => 'application/x-www-form-urlencoded'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'multipart/form-data'])];
     }
 
-    public function provideDataUnsupportedContentType(): iterable
+    public static function provideDataUnsupportedContentType(): iterable
     {
         yield [new Request(server: ['CONTENT_TYPE' => 'application/xhtml+xml'])];
         yield [new Request(server: ['CONTENT_TYPE' => 'text/plain'])];
@@ -223,7 +217,7 @@ class InputFactoryTest extends TestCase
         yield [new Request(server: ['CONTENT_TYPE' => 'application/rss+xml'])];
     }
 
-    public function provideDataEmptyContentType(): iterable
+    public static function provideDataEmptyContentType(): iterable
     {
         yield [new Request()];
         yield [new Request(server: ['CONTENT_TYPE' => ''])];
@@ -232,8 +226,8 @@ class InputFactoryTest extends TestCase
     private function createInputFactory(bool $skipValidation): InputFactoryInterface
     {
         return new InputFactory(
-            $this->serializer->reveal(),
-            $this->validator->reveal(),
+            $this->serializer,
+            $this->validator,
             $skipValidation,
             Input::INPUT_SUPPORTED_FORMATS
         );
