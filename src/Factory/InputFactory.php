@@ -49,6 +49,7 @@ final class InputFactory implements InputFactoryInterface
         $data = $request->getContent();
         $format = $request->getContentTypeFormat();
         if (Input::INPUT_FORM_FORMAT === $format) {
+            @trigger_error("The format 'form' is deprecated and will be removed in version 2.0. Use 'symfony/form' component instead.", \E_USER_DEPRECATED);
             $data = json_encode($request->request->all());
             $format = Input::INPUT_JSON_FORMAT;
         }
