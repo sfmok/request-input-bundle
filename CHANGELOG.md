@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.6
+- Support symfony 7
+- Deprecate `form` request input data.
+
 ## 1.2.5
 - Fix [#10](https://github.com/sfmok/request-input-bundle/issues/10) issue - throw `UnsupportedMediaTypeHttpException` in case `Content-Type` header is missing or unsupported.
 
