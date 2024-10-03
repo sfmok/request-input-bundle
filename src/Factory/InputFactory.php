@@ -33,6 +33,10 @@ final class InputFactory implements InputFactoryInterface
             return [];
         }
 
+        if (!is_subclass_of($type, InputInterface::class)) {
+            return [];
+        }
+
         $contentType = $request->headers->get('CONTENT_TYPE');
         if (null === $contentType || '' === $contentType) {
             throw new UnsupportedMediaTypeHttpException('The "Content-Type" header must exist and not empty.');
