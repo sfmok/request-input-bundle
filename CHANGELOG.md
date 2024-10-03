@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.6
+- Support symfony 7 & fix deprecation.
+- Deprecate `form` request input data.
+- Upgrade PHPUnit & fix deprecation.
+- Add nix flake for development environment.
+
 ## 1.2.5
 - Fix [#10](https://github.com/sfmok/request-input-bundle/issues/10) issue - throw `UnsupportedMediaTypeHttpException` in case `Content-Type` header is missing or unsupported.
 
