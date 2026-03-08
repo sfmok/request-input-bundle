@@ -17,8 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
-          - "8.2"
+          - "8.4"
         dependencies:
           - "highest"
         stability:
@@ -27,11 +26,11 @@ jobs:
           # Tests the lowest set of dependencies
           - dependencies: "lowest"
             stability: "stable"
-            php-version: "8.1"
+            php-version: "8.4"
           # Tests the highest set of dependencies
           - dependencies: "highest"
             stability: "dev"
-            php-version: "8.2"
+            php-version: "8.4"
 
     steps:
       - name: "Checkout"

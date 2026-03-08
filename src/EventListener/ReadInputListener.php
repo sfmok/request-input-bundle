@@ -11,9 +11,7 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 class ReadInputListener
 {
-    public function __construct(private InputMetadataFactoryInterface $inputMetadataFactory)
-    {
-    }
+    public function __construct(private InputMetadataFactoryInterface $inputMetadataFactory) {}
 
     public function onKernelController(ControllerEvent $event): void
     {

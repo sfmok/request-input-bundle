@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Tests\ValueResolver;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Tests\Fixtures\Input\DummyInput;
@@ -11,6 +12,10 @@ use Sfmok\RequestInput\ValueResolver\InputValueResolver;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 
+/**
+ * @internal
+ */
+#[CoversClass(InputValueResolver::class)]
 class InputValueResolverTest extends TestCase
 {
     public function testResolve(): void
@@ -23,7 +28,8 @@ class InputValueResolverTest extends TestCase
         $factory->expects(self::once())
             ->method('createFromRequest')
             ->with($request, $dummyInput::class)
-            ->willReturn([$dummyInput]);
+            ->willReturn([$dummyInput])
+        ;
         $this->assertEquals([$dummyInput], $resolver->resolve($request, $argument));
     }
 }

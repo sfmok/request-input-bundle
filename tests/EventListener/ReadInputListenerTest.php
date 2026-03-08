@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Tests\EventListener;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Sfmok\RequestInput\Attribute\Input;
 use Sfmok\RequestInput\EventListener\ReadInputListener;
@@ -14,6 +16,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
+/**
+ * @internal
+ */
+#[CoversClass(ReadInputListener::class)]
+#[AllowMockObjectsWithoutExpectations]
 class ReadInputListenerTest extends TestCase
 {
     public function testOnKernelController(): void

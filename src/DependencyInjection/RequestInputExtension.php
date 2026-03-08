@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\DependencyInjection;
 
+use Sfmok\RequestInput\EventListener\ExceptionListener;
+use Sfmok\RequestInput\EventListener\ReadInputListener;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
 use Sfmok\RequestInput\Metadata\InputMetadataFactory;
 use Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface;
-use Sfmok\RequestInput\EventListener\ReadInputListener;
-use Sfmok\RequestInput\EventListener\ExceptionListener;
 use Sfmok\RequestInput\ValueResolver\InputValueResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
-* @internal
-*/
+ * @internal
+ */
 class RequestInputExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void

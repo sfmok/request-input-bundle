@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Tests\EventListener;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Sfmok\RequestInput\EventListener\ExceptionListener;
 use Sfmok\RequestInput\Exception\DeserializationException;
@@ -17,6 +19,11 @@ use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
 
+/**
+ * @internal
+ */
+#[CoversClass(ExceptionListener::class)]
+#[AllowMockObjectsWithoutExpectations]
 class ExceptionListenerTest extends TestCase
 {
     private SerializerInterface $serializer;
@@ -79,7 +86,7 @@ class ExceptionListenerTest extends TestCase
             'violations' => [[
                 'propertyPath' => 'foo',
                 'message' => 'This value should be of type string',
-                'currentType' => 'array'
+                'currentType' => 'array',
             ]],
         ]), $response->getContent());
     }
