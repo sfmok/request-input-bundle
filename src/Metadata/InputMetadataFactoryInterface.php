@@ -8,5 +8,5 @@ use Sfmok\RequestInput\Attribute\Input;
 
 interface InputMetadataFactoryInterface
 {
-    public function createInputMetadata(string|object|array $controller): ?Input;
+    public function createInputMetadata(array|object|string $controller): ?Input;
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.0
+- Support Symfony v8.
+- Upgrade PHPunit to v12.
+- Fix Symfony and PHPUnit deprecations.
+- Remove `form` format deprecations.
+- Fix [#22](https://github.com/sfmok/request-input-bundle/issues/22)
+- Fix [#21](https://github.com/sfmok/request-input-bundle/issues/21)
+
 ## 1.2.6
 - Support symfony 7 & fix deprecation.
 - Deprecate `form` request input data.

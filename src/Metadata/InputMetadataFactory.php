@@ -8,14 +8,14 @@ use Sfmok\RequestInput\Attribute\Input;
 
 final class InputMetadataFactory implements InputMetadataFactoryInterface
 {
-    public function createInputMetadata(string|object|array $controller): ?Input
+    public function createInputMetadata(array|object|string $controller): ?Input
     {
         if (\is_array($controller)) {
             $reflection = new \ReflectionMethod($controller[0], $controller[1]);
         } elseif (\is_object($controller) && !$controller instanceof \Closure) {
             $reflection = new \ReflectionMethod($controller, '__invoke');
         } elseif (\is_string($controller) && \str_contains($controller, '::')) {
-            $reflection = new \ReflectionMethod($controller);
+            $reflection = \ReflectionMethod::createFromMethodName($controller);
         } else {
             return null;
         }

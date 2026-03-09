@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\Tests\Fixtures\Input;
 
 use Sfmok\RequestInput\InputInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class DummyInput implements InputInterface
 {

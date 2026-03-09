@@ -6,7 +6,7 @@
 
 **RequestInputBundle** converts request data into DTO inputs objects with validation.
 
-- Request data supported: `json`, `xml` and `form` based on `Content-Type` header.
+- Request data supported: `json` and `xml` based on `Content-Type` header.
 - Resolve inputs arguments for controllers actions.
 - Create DTO inputs outside controllers
 - Validate DTO inputs objects.

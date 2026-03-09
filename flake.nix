@@ -25,8 +25,8 @@
         name = "php-dev-env";
 
         packages = [
-          pkgs.php82
-          pkgs.php82.packages.composer
+          pkgs.php84
+          pkgs.php84.packages.composer
         ];
       };
     };

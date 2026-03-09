@@ -6,6 +6,4 @@ namespace Sfmok\RequestInput;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class RequestInputBundle extends Bundle
-{
-}
+class RequestInputBundle extends Bundle {}

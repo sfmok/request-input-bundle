@@ -13,9 +13,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class ExceptionListener
 {
-    public function __construct(private SerializerInterface $serializer)
-    {
-    }
+    public function __construct(private SerializerInterface $serializer) {}
 
     public function onKernelException(ExceptionEvent $event): void
     {
@@ -55,7 +53,7 @@ class ExceptionListener
         $data = json_encode([
             'title' => $exception->getMessage(),
             'detail' => empty($violations) ? $detail : 'Data error',
-            'violations' => $violations
+            'violations' => $violations,
         ]);
 
         $event->setResponse(new Response($data, $exception->getStatusCode(), $headers));
