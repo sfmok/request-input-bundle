@@ -11,7 +11,7 @@ on:
 jobs:
   phpunit:
     name: "PHPUnit"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
 
     strategy:
       fail-fast: false
@@ -65,7 +65,7 @@ jobs:
 
   upload_coverage:
     name: "Upload coverage to Codecov"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
     needs:
       - "phpunit"
 
