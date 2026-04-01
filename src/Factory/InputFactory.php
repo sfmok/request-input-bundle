@@ -6,7 +6,9 @@ namespace Sfmok\RequestInput\Factory;
 
 use Sfmok\RequestInput\Exception\DeserializationException;
 use Sfmok\RequestInput\Exception\ValidationException;
-use Sfmok\RequestInput\InputInterface;
+use Sfmok\RequestInput\Enum\Format;
+use Sfmok\RequestInput\Enum\Source;
+use Sfmok\RequestInput\Metadata\InputMetadataResolverInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
@@ -21,54 +23,66 @@ final class InputFactory implements InputFactoryInterface
     public function __construct(
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
-        private bool $skipValidation,
-        private array $inputFormats
+        private InputMetadataResolverInterface $inputMetadataResolver,
     ) {}
 
-    public function createFromRequest(Request $request, string $type): iterable
+    public function createFromRequest(Request $request, ?string $type): ?object
     {
-        if (!is_subclass_of($type, InputInterface::class)) {
-            return [];
+        if (!$inputMetadata = $this->inputMetadataResolver->resolve($type)) {
+            return null;
         }
 
-        $contentType = $request->headers->get('CONTENT_TYPE');
-        if (null === $contentType || '' === $contentType) {
-            throw new UnsupportedMediaTypeHttpException('The "Content-Type" header must exist and not empty.');
+        if ($inputMetadata->source->isQueryString()) {
+            try {
+                $data = json_encode($request->query->all(), JSON_THROW_ON_ERROR);
+            } catch (\JsonException $exception) {
+                throw new DeserializationException('Deserialization Failed', $exception);
+            }
+            $format = Format::Json;
+        } else {
+            $contentTypeFormat = $request->getContentTypeFormat();
+            if (!$contentTypeFormat) {
+                throw new UnsupportedMediaTypeHttpException('The "Content-Type" header must exist and not empty.');
+            }
+
+            $mimeType = $request->getMimeType($contentTypeFormat);
+
+            if (!$mimeType || !($format = Format::tryFrom($contentTypeFormat))) {
+                throw new UnsupportedMediaTypeHttpException(sprintf(
+                    'The content-type "%s" is not supported. Supported MIME types are "%s".',
+                    $mimeType,
+                    implode('", "', $this->getSupportedMimeTypes($request)),
+                ));
+            }
+
+            $data = $request->getContent();
         }
-
-        $inputMetadata = $request->attributes->get('_input');
-        $formats = (array) ($inputMetadata?->getFormat() ?? $this->inputFormats);
-        $supportedMimeTypes = $this->getSupportedMimeTypes($request, $formats);
-
-        if (!\in_array($contentType, $supportedMimeTypes, true)) {
-            throw new UnsupportedMediaTypeHttpException(sprintf('The content-type "%s" is not supported. Supported MIME types are "%s".', $contentType, implode('", "', $supportedMimeTypes)));
-        }
-
-        $data = $request->getContent();
-        $format = $request->getContentTypeFormat();
 
         try {
-            $input = $this->serializer->deserialize($data, $type, $format, $inputMetadata?->getContext() ?? []);
+            $input = $this->serializer->deserialize($data, $type, $format->value, $inputMetadata->serialization->context);
         } catch (UnexpectedValueException $exception) {
             throw new DeserializationException('Deserialization Failed', $exception);
         }
 
-        if (!$this->skipValidation) {
-            $violations = $this->validator->validate($input, null, $inputMetadata?->getGroups() ?? ['Default']);
+        $validation = $inputMetadata->validation;
+
+        if (!$validation->skip) {
+            $violations = $this->validator->validate($input, null, $validation->groups);
 
             if ($violations->count()) {
-                throw new ValidationException($violations);
+                throw new ValidationException($violations, $validation->statusCode);
             }
         }
 
-        return [$input];
+        return $input;
     }
 
-    private function getSupportedMimeTypes(Request $request, array $formats): array
+    private function getSupportedMimeTypes(Request $request): array
     {
         $mimeTypes = [];
-        foreach ($formats as $format) {
-            $mimeTypes = array_merge($mimeTypes, $request->getMimeTypes($format));
+        foreach (Format::cases() as $format) {
+            assert($format instanceof Format);
+            $mimeTypes = array_merge($mimeTypes, $request->getMimeTypes($format->value));
         }
 
         return $mimeTypes;

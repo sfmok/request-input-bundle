@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace Sfmok\RequestInput\Exception;
 
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class ValidationException extends BadRequestHttpException implements ExceptionInterface
+class ValidationException extends HttpException implements ExceptionInterface
 {
-    private ConstraintViolationListInterface $violationList;
-
-    public function __construct(ConstraintViolationListInterface $violationList)
-    {
-        $this->violationList = $violationList;
-
-        parent::__construct();
+    public function __construct(
+        private ConstraintViolationListInterface $violationList,
+        int $statusCode = 400,
+    ) {
+        parent::__construct($statusCode);
     }
 
     public function getViolationList(): ConstraintViolationListInterface

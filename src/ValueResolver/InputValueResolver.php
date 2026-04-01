@@ -15,6 +15,6 @@ class InputValueResolver implements ValueResolverInterface
 
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
-        return $this->inputFactory->createFromRequest($request, $argument->getType());
+        return array_filter([$this->inputFactory->createFromRequest($request, $argument->getType())]);
     }
 }

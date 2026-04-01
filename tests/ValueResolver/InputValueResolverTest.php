@@ -28,7 +28,7 @@ class InputValueResolverTest extends TestCase
         $factory->expects(self::once())
             ->method('createFromRequest')
             ->with($request, $dummyInput::class)
-            ->willReturn([$dummyInput])
+            ->willReturn($dummyInput)
         ;
         $this->assertEquals([$dummyInput], $resolver->resolve($request, $argument));
     }

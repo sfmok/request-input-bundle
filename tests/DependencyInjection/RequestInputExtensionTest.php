@@ -8,11 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Sfmok\RequestInput\DependencyInjection\RequestInputExtension;
 use Sfmok\RequestInput\EventListener\ExceptionListener;
-use Sfmok\RequestInput\EventListener\ReadInputListener;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
-use Sfmok\RequestInput\Metadata\InputMetadataFactory;
-use Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface;
+use Sfmok\RequestInput\Metadata\InputMetadataResolver;
+use Sfmok\RequestInput\Metadata\InputMetadataResolverInterface;
 use Sfmok\RequestInput\ValueResolver\InputValueResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -25,8 +24,13 @@ class RequestInputExtensionTest extends TestCase
     public const DEFAULT_CONFIG = [
         'request_input' => [
             'enabled' => true,
-            'formats' => ['json', 'xml'],
-            'skip_validation' => false,
+            'validation' => [
+                'skip' => false,
+                'status_code' => 400,
+            ],
+            'serialization' => [
+                'context' => [],
+            ],
         ],
     ];
 
@@ -45,21 +49,19 @@ class RequestInputExtensionTest extends TestCase
         $services = [
             InputValueResolver::class,
             ExceptionListener::class,
-            ReadInputListener::class,
             InputFactory::class,
-            InputMetadataFactory::class,
+            InputMetadataResolver::class,
         ];
 
         $aliases = [
             InputFactoryInterface::class,
-            InputMetadataFactoryInterface::class,
+            InputMetadataResolverInterface::class,
         ];
 
         $this->assertContainerHas($services, $aliases);
 
         $this->assertServiceHasTags(InputValueResolver::class, ['controller.argument_value_resolver']);
         $this->assertServiceHasTags(ExceptionListener::class, ['kernel.event_listener']);
-        $this->assertServiceHasTags(ReadInputListener::class, ['kernel.event_listener']);
     }
 
     public function testLoadConfigurationWithDisabledOption(): void
@@ -69,9 +71,8 @@ class RequestInputExtensionTest extends TestCase
         $services = [
             InputValueResolver::class,
             ExceptionListener::class,
-            ReadInputListener::class,
             InputFactory::class,
-            InputMetadataFactory::class,
+            InputMetadataResolver::class,
         ];
 
         foreach ($services as $service) {

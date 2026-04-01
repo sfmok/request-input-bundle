@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\DependencyInjection;
 
 use Sfmok\RequestInput\EventListener\ExceptionListener;
-use Sfmok\RequestInput\EventListener\ReadInputListener;
 use Sfmok\RequestInput\Factory\InputFactory;
 use Sfmok\RequestInput\Factory\InputFactoryInterface;
-use Sfmok\RequestInput\Metadata\InputMetadataFactory;
-use Sfmok\RequestInput\Metadata\InputMetadataFactoryInterface;
+use Sfmok\RequestInput\Metadata\InputMetadataResolver;
+use Sfmok\RequestInput\Metadata\InputMetadataResolverInterface;
+use Sfmok\RequestInput\Metadata\SerializationMetadata;
+use Sfmok\RequestInput\Metadata\ValidationMetadata;
 use Sfmok\RequestInput\ValueResolver\InputValueResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -31,20 +33,29 @@ class RequestInputExtension extends Extension
             return;
         }
 
-        $container->register(InputFactory::class)
+        $globalValidation = $this->createGlobalValidationDefinition($config['validation']);
+        $globalSerialization = $this->createGlobalSerializationDefinition($config['serialization']);
+
+        $container->register(InputMetadataResolver::class)
             ->setArguments([
-                '$serializer' => new Reference(SerializerInterface::class),
-                '$validator' => new Reference(ValidatorInterface::class),
-                '$skipValidation' => $config['skip_validation'],
-                '$inputFormats' => $config['formats'],
+                '$globalValidation' => $globalValidation,
+                '$globalSerialization' => $globalSerialization,
             ])
             ->setPublic(false)
         ;
 
-        $container->register(InputMetadataFactory::class)->setPublic(false);
+        $container->setAlias(InputMetadataResolverInterface::class, InputMetadataResolver::class)->setPublic(false);
+
+        $container->register(InputFactory::class)
+            ->setArguments([
+                '$serializer' => new Reference(SerializerInterface::class),
+                '$validator' => new Reference(ValidatorInterface::class),
+                '$inputMetadataResolver' => new Reference(InputMetadataResolverInterface::class),
+            ])
+            ->setPublic(false)
+        ;
 
         $container->setAlias(InputFactoryInterface::class, InputFactory::class)->setPublic(false);
-        $container->setAlias(InputMetadataFactoryInterface::class, InputMetadataFactory::class)->setPublic(false);
 
         $container->register(InputValueResolver::class)
             ->setArguments([
@@ -59,11 +70,29 @@ class RequestInputExtension extends Extension
             ->addTag('kernel.event_listener', ['event' => 'kernel.exception'])
             ->setPublic(false)
         ;
+    }
 
-        $container->register(ReadInputListener::class)
-            ->setArguments(['$inputMetadataFactory' => new Reference(InputMetadataFactoryInterface::class)])
-            ->addTag('kernel.event_listener', ['event' => 'kernel.controller'])
-            ->setPublic(false)
-        ;
+    /**
+     * @param array{skip: bool, status_code: int} $validation
+     */
+    private function createGlobalValidationDefinition(array $validation): Definition
+    {
+        return (new Definition(ValidationMetadata::class))
+            ->setArguments([
+                $validation['skip'],
+                $validation['status_code'],
+                null,
+            ]);
+    }
+
+    /**
+     * @param array<string, mixed> $serialization
+     */
+    private function createGlobalSerializationDefinition(array $serialization): Definition
+    {
+        return (new Definition(SerializationMetadata::class))
+            ->setArguments([
+                $serialization['context'],
+            ]);
     }
 }

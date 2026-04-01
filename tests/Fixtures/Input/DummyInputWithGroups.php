@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Sfmok\RequestInput\Tests\Fixtures\Input;
 
 use Sfmok\RequestInput\Attribute\AsInput;
+use Sfmok\RequestInput\Metadata\SerializationMetadata;
+use Sfmok\RequestInput\Metadata\ValidationMetadata;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[AsInput]
-class DummyInput
+#[AsInput(
+    validation: new ValidationMetadata(groups: ['foo']),
+    serialization: new SerializationMetadata(context: ['groups' => 'foo']),
+)]
+class DummyInputWithGroups
 {
     #[Assert\NotBlank]
     private string $title;

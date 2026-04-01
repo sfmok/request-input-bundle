@@ -1,75 +1,181 @@
 ## RequestInputBundle
+
 [![CI](https://github.com/sfmok/request-input/actions/workflows/ci.yml/badge.svg)](https://github.com/sfmok/request-input/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/github/sfmok/request-input-bundle/branch/main/graph/badge.svg?token=9EDGRUPYCB)](https://codecov.io/github/sfmok/request-input-bundle)
 [![Latest Stable Version](http://poser.pugx.org/sfmok/request-input-bundle/v/stable)](https://packagist.org/packages/sfmok/request-input-bundle)
 [![License](http://poser.pugx.org/sfmok/request-input-bundle/license)](https://packagist.org/packages/sfmok/request-input-bundle)
 
-**RequestInputBundle** converts request data into DTO inputs objects with validation.
+**RequestInputBundle** deserializes and validates HTTP request data into typed DTO objects, resolvable directly as controller arguments.
 
-- Request data supported: `json` and `xml` based on `Content-Type` header.
-- Resolve inputs arguments for controllers actions.
-- Create DTO inputs outside controllers
-- Validate DTO inputs objects.
-- Global YAML configuration.
-- Custom Configuration via Input Attribute per controller action.
+---
 
-### Installation
-Require the bundle with composer:
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [The `#[AsInput]` Attribute](#the-asinput-attribute)
+  - [Body Payload (JSON / XML)](#body-payload-json--xml)
+  - [Query String](#query-string)
+- [Validation](#validation)
+- [Deserialization Errors](#deserialization-errors)
+- [Configuration](#configuration)
+  - [Global YAML defaults](#global-yaml-defaults)
+  - [Per-DTO overrides with `ValidationMetadata`](#per-dto-overrides-with-validationmetadata)
+  - [Per-DTO overrides with `SerializationMetadata`](#per-dto-overrides-with-serializationmetadata)
+  - [Combining both overrides](#combining-both-overrides)
+- [Using `InputFactoryInterface` outside controllers](#using-inputfactoryinterface-outside-controllers)
+- [License](#license)
+
+---
+
+## Installation
+
 ```bash
 composer require sfmok/request-input-bundle
 ```
 
-### How to use
+---
 
-- Create DTO input and implements `Sfmok\RequestInput\InputInterface`
+## Quick Start
+
+Decorate your DTO class with `#[AsInput]` and type-hint it as a controller argument — that's all.
+
 ```php
-use Sfmok\RequestInput\InputInterface;
+use Sfmok\RequestInput\Attribute\AsInput;
+use Symfony\Component\Validator\Constraints as Assert;
 
-class PostInput implements InputInterface
+#[AsInput]
+class CreatePostInput
 {
     #[Assert\NotBlank]
-    private string $title;
+    public string $title;
 
     #[Assert\NotBlank]
-    private string $content;
-
-    #[Assert\NotBlank]
-    private array $tags;
-
-    #[SerializedName('author')]
-    #[Assert\NotBlank]
-    private string $name;
-    
-    # getters and setters or make properties public
+    public string $content;
 }
 ```
-- Use DTO input in your controller action as an argument:
+
 ```php
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
 class PostController
 {
-    # Example with global config
-    #[Route(path: '/posts', name: 'create')]
-    public function create(PostInput $input): Response
+    #[Route('/posts', methods: ['POST'])]
+    public function create(CreatePostInput $input): Response
     {
-        dd($input);
-    }
-    
-    # Example with specific config
-    #[Route(path: '/posts', name: 'create')]
-    #[Input(format: 'json', groups: ['create'], context: ['groups' => ['create']])]
-    public function create(PostInput $input): Response
-    {
-        dd($input);
+        // $input is already deserialized and validated
+        echo $input->title;
     }
 }
 ```
 
-### Validations
-- Response header
+Send a JSON request:
+
+```http
+POST /posts
+Content-Type: application/json
+
+{"title": "Hello", "content": "World"}
 ```
-Content-Type: application/json; charset=utf-8
+
+---
+
+## The `#[AsInput]` Attribute
+
+```php
+#[\Attribute(\Attribute::TARGET_CLASS)]
+final class AsInput
+{
+    public function __construct(
+        public ?Source $source = null,           // Source::BodyPayload (default) or Source::QueryString
+        public ?ValidationMetadata $validation = null,
+        public ?SerializationMetadata $serialization = null,
+    ) {}
+}
 ```
-- Response body
+
+All parameters are optional. `#[AsInput]` with no arguments uses the global YAML defaults.
+
+### Body Payload (JSON / XML)
+
+The default source is `Source::BodyPayload`. The serialization format is determined from the request `Content-Type` header.
+
+Supported content types:
+
+| Content-Type | Format |
+|---|---|
+| `application/json`, `application/x-json` | JSON |
+| `application/xml`, `text/xml` | XML |
+
+```php
+#[AsInput]
+class CreatePostInput
+{
+    #[Assert\NotBlank]
+    public string $title;
+
+    #[Assert\NotBlank]
+    #[SerializedName('body')]   // maps JSON key "body" → $content
+    public string $content;
+}
+```
+
+```http
+POST /posts
+Content-Type: application/xml
+
+<request><title>Hello</title><body>World</body></request>
+```
+
+### Query String
+
+Set `source: Source::QueryString` to populate the DTO from query parameters instead of the request body. No `Content-Type` header is required.
+
+```php
+use Sfmok\RequestInput\Attribute\AsInput;
+use Sfmok\RequestInput\Enum\Source;
+use Symfony\Component\Validator\Constraints as Assert;
+
+#[AsInput(source: Source::QueryString)]
+class SearchInput
+{
+    #[Assert\NotBlank]
+    public string $query;
+
+    #[Assert\Range(min: 1, max: 100)]
+    public int $limit = 20;
+
+    public int $page = 1;
+}
+```
+
+```php
+class SearchController
+{
+    #[Route('/search', methods: ['GET'])]
+    public function search(SearchInput $input): Response
+    {
+        // populated from ?query=foo&limit=10&page=2
+    }
+}
+```
+
+---
+
+## Validation
+
+When validation fails the bundle throws a `ValidationException` (an `HttpException`) which is caught by the built-in `ExceptionListener` and converted to a structured JSON response.
+
+**Response headers:**
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+```
+
+**Response body:**
+
 ```json
 {
   "type": "https://symfony.com/errors/validation",
@@ -88,17 +194,20 @@ Content-Type: application/json; charset=utf-8
 }
 ```
 
-### Deserialization
+Validation groups and the HTTP status code are configurable (see [Configuration](#configuration)).
 
-Whether the request data contains invalid syntax or invalid attributes types a clear 400 json response will return:
+---
 
-- Data Error
+## Deserialization Errors
+
+Both type mismatches and syntax errors produce a structured 400 response.
+
+**Type mismatch** — sending an integer where a string is expected:
 
 ```json
-{
-  "title": 12
-}
+{ "title": 42 }
 ```
+
 ```json
 {
   "title": "Deserialization Failed",
@@ -112,12 +221,13 @@ Whether the request data contains invalid syntax or invalid attributes types a c
   ]
 }
 ```
-- Syntax error:
+
+**Syntax error** — malformed JSON:
+
 ```json
-{
-  "title": "foo",
-}
+{ "title": "foo", }
 ```
+
 ```json
 {
   "title": "Deserialization Failed",
@@ -126,45 +236,135 @@ Whether the request data contains invalid syntax or invalid attributes types a c
 }
 ```
 
-### Configuration
+---
+
+## Configuration
+
+### Global YAML defaults
 
 ```yaml
 # config/packages/request_input.yaml
 request_input:
-  enabled: true # default value true
-  formats: ['json'] # default value ['json', 'xml', 'form']
-  skip_validation: true # default value false
+  enabled: true           # disable the bundle entirely (default: true)
+  validation:
+    skip: false           # skip validation for all inputs (default: false)
+    status_code: 400      # HTTP status code for validation errors (default: 400)
+  serialization:
+    context: []           # Symfony Serializer context applied to all inputs (default: [])
 ```
 
-You can also override the format using attribute input and specify the format explicitly.
+### Per-DTO overrides with `ValidationMetadata`
 
-### Create DTO input outside controller
+`ValidationMetadata` lets you override `skip`, `status_code`, and `groups` for a specific DTO. Per-DTO values take precedence over global YAML; unset fields fall back to the global value.
 
-You just need to inject `InputFactoryInterface` e.g:
+| Property | Type | Description |
+|---|---|---|
+| `skip` | `bool\|null` | Skip validation for this DTO |
+| `statusCode` | `int\|null` | HTTP status code on validation failure |
+| `groups` | `string[]\|null` | Validation groups to apply |
+
 ```php
-<?php
+use Sfmok\RequestInput\Attribute\AsInput;
+use Sfmok\RequestInput\Metadata\ValidationMetadata;
+use Symfony\Component\Validator\Constraints as Assert;
 
-declare(strict_types=1);
-
-namespace App\Manager;
-
-use App\Dto\PostInput;
-use Sfmok\RequestInput\InputInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Sfmok\RequestInput\Factory\InputFactoryInterface;
-
-class PostManager
+#[AsInput(
+    validation: new ValidationMetadata(
+        groups: ['create'],
+        statusCode: 422,
+    )
+)]
+class CreatePostInput
 {
-    public function __construct(private InputFactoryInterface $inputFactory)
-    {
-    }
+    #[Assert\NotBlank(groups: ['create'])]
+    public string $title;
+}
+```
 
-    public function getInput(Request $request): InputInterface
+To skip validation entirely for one DTO while keeping it enabled globally:
+
+```php
+#[AsInput(validation: new ValidationMetadata(skip: true))]
+class RawWebhookInput
+{
+    public string $payload;
+}
+```
+
+### Per-DTO overrides with `SerializationMetadata`
+
+`SerializationMetadata` lets you pass a Symfony Serializer context for a specific DTO. The per-DTO context is **merged on top of** the global context (per-DTO keys win on conflict).
+
+| Property | Type | Description |
+|---|---|---|
+| `context` | `array<string, mixed>` | Symfony Serializer context entries |
+
+```php
+use Sfmok\RequestInput\Attribute\AsInput;
+use Sfmok\RequestInput\Metadata\SerializationMetadata;
+
+#[AsInput(
+    serialization: new SerializationMetadata(
+        context: ['groups' => ['create']]
+    )
+)]
+class CreatePostInput
+{
+    #[Groups(['create'])]
+    public string $title;
+
+    #[Groups(['edit'])]       // excluded when deserializing with group 'create'
+    public string $slug;
+}
+```
+
+### Combining both overrides
+
+```php
+use Sfmok\RequestInput\Attribute\AsInput;
+use Sfmok\RequestInput\Metadata\SerializationMetadata;
+use Sfmok\RequestInput\Metadata\ValidationMetadata;
+
+#[AsInput(
+    validation: new ValidationMetadata(groups: ['create'], statusCode: 422),
+    serialization: new SerializationMetadata(context: ['groups' => ['create']]),
+)]
+class CreatePostInput
+{
+    #[Assert\NotBlank(groups: ['create'])]
+    #[Groups(['create'])]
+    public string $title;
+}
+```
+
+---
+
+## Using `InputFactoryInterface` outside controllers
+
+Inject `InputFactoryInterface` anywhere in your application to resolve inputs manually.
+
+```php
+use Sfmok\RequestInput\Factory\InputFactoryInterface;
+use Symfony\Component\HttpFoundation\Request;
+
+class PostService
+{
+    public function __construct(private InputFactoryInterface $inputFactory) {}
+
+    public function handle(Request $request): void
     {
-        return $this->inputFactory->createFromRequest($request, PostInput::class);
+        /** @var CreatePostInput $input */
+        $input = $this->inputFactory->createFromRequest($request, CreatePostInput::class);
+
+        // $input is deserialized and validated, or null if CreatePostInput
+        // is not decorated with #[AsInput]
     }
 }
 ```
+
+`createFromRequest` returns `null` when the given class does not carry the `#[AsInput]` attribute, making it safe to call speculatively.
+
+---
 
 ## License
 
